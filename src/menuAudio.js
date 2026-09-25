@@ -20,6 +20,7 @@ export class MenuAudio {
     if (this.ambient) return;
     const c = this.ctx, t = this.now();
     const g = c.createGain();
+    g.gain.value = 0.0001;
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(0.5, t + 3);
     g.connect(this.out);
@@ -30,10 +31,10 @@ export class MenuAudio {
     // D pedal and a slow, breathing fifth
     for (const [f, det, amp] of [[36.71, 0, 0.18], [36.71, 8, 0.18], [55, -5, 0.1], [73.42, 4, 0.06]]) {
       const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
-      const og = c.createGain(); og.gain.value = amp; o.connect(og); og.connect(lp); o.start(); nodes.push(o);
+      const og = c.createGain(); og.gain.value = amp; o.connect(og); og.connect(lp); o.start(t); nodes.push(o);
     }
     const lfo = c.createOscillator(); lfo.frequency.value = 0.07;
-    const lg = c.createGain(); lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); nodes.push(lfo);
+    const lg = c.createGain(); lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start(t); nodes.push(lfo);
     // high choir shimmer, D minor add9
     const choir = c.createGain(); choir.gain.value = 0.018; choir.connect(g);
     const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 3; bp.connect(choir);
@@ -41,14 +42,14 @@ export class MenuAudio {
       for (const det of [-7, 6]) {
         const o = c.createOscillator(); o.type = 'sawtooth';
         o.frequency.value = 440 * Math.pow(2, (m - 69) / 12); o.detune.value = det;
-        o.connect(bp); o.start(); nodes.push(o);
+        o.connect(bp); o.start(t); nodes.push(o);
       }
     }
     // crackling embers from the circle
     const src = c.createBufferSource(); src.buffer = this.noise; src.loop = true;
     const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3000;
     const cg = c.createGain(); cg.gain.value = 0.0;
-    src.connect(hp); hp.connect(cg); cg.connect(g); src.start(); nodes.push(src);
+    src.connect(hp); hp.connect(cg); cg.connect(g); src.start(t); nodes.push(src);
     this._crackle = setInterval(() => {
       const tt = this.now();
       cg.gain.setValueAtTime(Math.random() * 0.12, tt);

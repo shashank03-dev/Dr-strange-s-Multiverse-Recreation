@@ -48,6 +48,29 @@ film ends you're returned to the title screen.
 | `H` | show / hide the HUD |
 | `Esc` | back to the title screen |
 
+## Deploying
+
+It's a static site with no build step. `vercel.json` sets cache headers for
+the asset pack. On Vercel, import the repository with the framework preset
+**Other**, leave the build command empty, and set the output directory to
+`.`. Any static host works the same way.
+
+## Rendering the video
+
+`tools/render_video.mjs` renders the whole experience to an MP4 one frame at a
+time, so motion trails and blur match real time exactly. That covers the
+opening card, the title screen (including a refused "no"), the dive and the
+full film. The title-screen sounds are rendered offline in the page and mixed
+with the film score.
+
+```bash
+npx http-server -p 8765 -c-1 .     # in one terminal
+node tools/render_video.mjs out/multiverse.mp4
+```
+
+`FPS`, `WIDTH`, `HEIGHT` and `QUALITY` control the output; `FROM`/`TO` render
+a frame range, which lets you resume. It needs Playwright and ffmpeg.
+
 URL parameters: `?t=16` starts at a given second, `?q=0.6` fixes the render
 scale (by default it adapts to hold 60 fps), `?noaudio` skips the score, and
 `?autoplay` answers the title screen for you.
@@ -120,8 +143,12 @@ travellers.
   stabs, war drums, and a Freeverb-style reverb and limiter. Every whoosh,
   boom, glass shatter and electrical crackle is placed on the frame of its
   cut, and the music is muffled while the camera is underwater.
-- **Performance**: dynamic resolution holds the frame rate by rendering scenes
-  into a scaled viewport. Shaders compile in parallel where
+- **Performance**: each universe's shader cost was measured
+  (`window.__profileScene`), and the heaviest were optimised (tetrahedral
+  normals, bounded evaluation of props, cheaper noise in distance functions).
+  Resolution is predictive: it drops the moment an expensive universe or a
+  two-scene transition begins, and a controller tunes the overall budget to
+  hold 60 fps. Scenes render into a scaled viewport. Shaders compile in parallel where
   `KHR_parallel_shader_compile` exists. Only transitions render two universes
   at once.
 
