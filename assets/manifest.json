@@ -421,7 +421,294 @@
    }
   }
  },
- "vol": {},
+ "vol": {
+  "bust": {
+   "sdf": "assets/vol/bust.sdf",
+   "col": "assets/vol/bust.col",
+   "n": 128,
+   "nc": 64,
+   "range": 0.15625,
+   "extent": [
+    0.5074,
+    0.9615,
+    0.5596
+   ],
+   "size": 0.2678,
+   "credit": {
+    "id": "marble_bust_01",
+    "name": "Marble Bust 01",
+    "authors": [
+     "Rico Cilliers"
+    ]
+   }
+  },
+  "lion": {
+   "sdf": "assets/vol/lion.sdf",
+   "col": "assets/vol/lion.col",
+   "n": 96,
+   "nc": 48,
+   "range": 0.20833333333333331,
+   "extent": [
+    0.7068,
+    0.9615,
+    0.4552
+   ],
+   "size": 0.2269,
+   "credit": {
+    "id": "lion_head",
+    "name": "Lion Head",
+    "authors": [
+     "Tina"
+    ]
+   }
+  },
+  "whale": {
+   "sdf": "assets/vol/whale.sdf",
+   "col": "assets/vol/whale.col",
+   "n": 112,
+   "nc": 48,
+   "range": 0.17857142857142855,
+   "extent": [
+    0.6561,
+    0.7553,
+    0.9615
+   ],
+   "size": 0.7102,
+   "credit": {
+    "id": "bronze_whale_statue",
+    "name": "Bronze Whale Statue",
+    "authors": [
+     "Tina"
+    ]
+   }
+  },
+  "shark": {
+   "sdf": "assets/vol/shark.sdf",
+   "col": "assets/vol/shark.col",
+   "n": 96,
+   "nc": 32,
+   "range": 0.20833333333333331,
+   "extent": [
+    0.4454,
+    0.5462,
+    0.9615
+   ],
+   "size": 0.3951,
+   "credit": {
+    "id": "bronze_shark_statue",
+    "name": "Bronze Shark Statue",
+    "authors": [
+     "Tina"
+    ]
+   }
+  },
+  "ship": {
+   "sdf": "assets/vol/ship.sdf",
+   "col": "assets/vol/ship.col",
+   "n": 128,
+   "nc": 64,
+   "range": 0.15625,
+   "extent": [
+    0.9615,
+    0.9006,
+    0.2355
+   ],
+   "size": 17.8106,
+   "credit": {
+    "id": "dutch_ship_large_01",
+    "name": "Dutch Ship Large 01",
+    "authors": [
+     "James Ray Cock",
+     "Rico Cilliers",
+     "Nicol\u00f2 Zubbini"
+    ]
+   }
+  },
+  "moonrock": {
+   "sdf": "assets/vol/moonrock.sdf",
+   "col": "assets/vol/moonrock.col",
+   "n": 64,
+   "nc": 32,
+   "range": 0.3125,
+   "extent": [
+    0.9615,
+    0.3409,
+    0.506
+   ],
+   "size": 0.1104,
+   "credit": {
+    "id": "moon_rock_01",
+    "name": "Moon Rock 01",
+    "authors": [
+     "Greg Zaal",
+     "Rico Cilliers",
+     "Jenelle van Heerden",
+     "Dario Barresi"
+    ]
+   }
+  },
+  "hydrant": {
+   "sdf": "assets/vol/hydrant.sdf",
+   "col": "assets/vol/hydrant.col",
+   "n": 64,
+   "nc": 32,
+   "range": 0.3125,
+   "extent": [
+    0.9615,
+    0.8789,
+    0.3493
+   ],
+   "size": 0.4548,
+   "credit": {
+    "id": "fire_hydrant",
+    "name": "Fire Hydrant",
+    "authors": [
+     "Gon\u00e7alo Fel\u00edcio"
+    ]
+   }
+  },
+  "streetlamp": {
+   "sdf": "assets/vol/streetlamp.sdf",
+   "col": "assets/vol/streetlamp.col",
+   "n": 96,
+   "nc": 32,
+   "range": 0.20833333333333331,
+   "extent": [
+    0.175,
+    0.9615,
+    0.096
+   ],
+   "size": 2.0127,
+   "credit": {
+    "id": "street_lamp_01",
+    "name": "Street Lamp 01",
+    "authors": [
+     "Josh Dean"
+    ]
+   }
+  },
+  "lantern": {
+   "sdf": "assets/vol/lantern.sdf",
+   "col": "assets/vol/lantern.col",
+   "n": 80,
+   "nc": 48,
+   "range": 0.25,
+   "extent": [
+    0.9612,
+    0.8187,
+    0.9615
+   ],
+   "size": 0.4569,
+   "credit": {
+    "id": "chinese_chandelier",
+    "name": "Chinese Chandelier",
+    "authors": [
+     "Kirill Sannikov"
+    ]
+   }
+  },
+  "screen": {
+   "sdf": "assets/vol/screen.sdf",
+   "col": "assets/vol/screen.col",
+   "n": 112,
+   "nc": 64,
+   "range": 0.17857142857142855,
+   "extent": [
+    0.7761,
+    0.9615,
+    0.2261
+   ],
+   "size": 0.8336,
+   "credit": {
+    "id": "chinese_screen_panels",
+    "name": "Chinese Screen Panels",
+    "authors": [
+     "Kirill Sannikov"
+    ]
+   }
+  },
+  "deadtree": {
+   "sdf": "assets/vol/deadtree.sdf",
+   "col": "assets/vol/deadtree.col",
+   "n": 96,
+   "nc": 48,
+   "range": 0.20833333333333331,
+   "extent": [
+    0.9615,
+    0.0915,
+    0.0875
+   ],
+   "size": 1.5865,
+   "credit": {
+    "id": "dead_tree_trunk",
+    "name": "Dead Tree Trunk",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "tree": {
+   "sdf": "assets/vol/tree.sdf",
+   "col": "assets/vol/tree.col",
+   "n": 96,
+   "nc": 48,
+   "range": 0.20833333333333331,
+   "extent": [
+    0.9095,
+    0.9615,
+    0.9214
+   ],
+   "size": 2.6143,
+   "credit": {
+    "id": "island_tree_01",
+    "name": "Island Tree 01",
+    "authors": [
+     "Rob Tuytel",
+     "Rico Cilliers"
+    ]
+   }
+  },
+  "boulder": {
+   "sdf": "assets/vol/boulder.sdf",
+   "col": "assets/vol/boulder.col",
+   "n": 64,
+   "nc": 32,
+   "range": 0.3125,
+   "extent": [
+    0.6683,
+    0.5273,
+    0.9615
+   ],
+   "size": 0.9518,
+   "credit": {
+    "id": "boulder_01",
+    "name": "Boulder 01",
+    "authors": [
+     "Rico Cilliers"
+    ]
+   }
+  },
+  "gnome": {
+   "sdf": "assets/vol/gnome.sdf",
+   "col": "assets/vol/gnome.col",
+   "n": 64,
+   "nc": 32,
+   "range": 0.3125,
+   "extent": [
+    0.414,
+    0.9615,
+    0.3366
+   ],
+   "size": 0.3115,
+   "credit": {
+    "id": "garden_gnome",
+    "name": "Garden Gnome",
+    "authors": [
+     "Bhargav Kubal"
+    ]
+   }
+  }
+ },
  "ui": {
   "title": {
    "file": "assets/ui/title_sdf.png",

@@ -85,7 +85,8 @@ vec3 render(vec2 uv, vec2 fc){
 `;
 
 // 13. Incursion -- a shattered, drifting city under a dead sky.
-export const ruins = /* glsl */ `
+const ruinsGLSL = /* glsl */ `
+uniform sampler2D uConcC, uConcN, uRockC, uRockN;
 float map(vec3 p, out float m){
   m = 0.;
   // hollowed tower shells
@@ -128,17 +129,21 @@ vec3 render(vec2 uv, vec2 fc){
   vec3 L = normalize(vec3(-.3, .7, .6));
   // stormy, sick sky with distant lightning
   float cl = fbm(rd.xz/max(abs(rd.y),.15)*1.5 + t*.05);
-  vec3 sky = mix(vec3(.12,.15,.17), vec3(.5,.56,.6), cl*sat(rd.y+.5));
+  vec3 sky = envSky(rd)*vec3(.75,.85,.9)*(.55 + .45*cl);
   float fl = step(.93, hash11(floor(t*6.)))*pow(sat(dot(rd, normalize(vec3(.5,.3,1.)))), 6.);
   sky += vec3(.5,.7,1.)*fl;
   vec3 col = sky;
   if(d < 90.){
     vec3 p = ro + rd*d, n = nrm(p);
-    vec3 alb = m == 1. ? vec3(.22,.21,.2) : vec3(.3,.31,.32)*(.6+.5*fbm3(p*.8));
+    Mat cm;
+    if(m == 1.) cm = triMat(uRockC, uRockN, p*.6, n, 1., 1.3);
+    else cm = triMat(uConcC, uConcN, p*.3, n, 1., 1.3);
+    vec3 alb = cm.alb*(m == 1. ? .7 : .85); n = cm.n;
     float dif = sat(dot(n, L));
     col = alb*(dif*vec3(.85,.9,1.)*2.2 + vec3(.2,.24,.28)*(n.y*.5+.5));
     col += alb*vec3(.5,.7,1.)*fl*3.;
-    col = mix(col, vec3(.2,.23,.25), 1.-exp(-d*.022));
+    col += ambPBR(alb, cm.rough, 0., n, -rd, cm.ao)*.6;
+    col = mix(col, envLod(rd, 5.)*vec3(.3,.34,.36), 1.-exp(-d*.022));
   }
   // green warning lights, scattered in the ruins
   for(int i=0;i<14;i++){
@@ -153,6 +158,12 @@ vec3 render(vec2 uv, vec2 fc){
   return col;
 }
 `;
+
+export const ruins = {
+  glsl: ruinsGLSL,
+  uses: { uEnv: 'env:overcast', uConc: 'mat:concrete', uRock: 'mat:rock' },
+  env: { rot: 0.5, gain: 0.8 },
+};
 
 // 14. Block realm -- a golden city built out of cubes.
 export const voxel = /* glsl */ `
@@ -300,7 +311,8 @@ vec3 render(vec2 uv, vec2 fc){
 `;
 
 // 16. Old world -- a cobbled avenue under a drifting zeppelin.
-export const sepia = /* glsl */ `
+const sepiaGLSL = /* glsl */ `
+uniform sampler2D uCobC, uCobN, uWallC, uWallN;
 const vec3 SUN = normalize(vec3(-.4, .5, .6));
 float map(vec3 p, out float m){
   m = 0.;
@@ -338,7 +350,7 @@ vec3 render(vec2 uv, vec2 fc){
     if(h < .001*d || d > 100.) break;
     d += h*.9;
   }
-  vec3 sky = mix(vec3(.9,.85,.75), vec3(.6,.6,.62), sat(rd.y*1.5));
+  vec3 sky = envSky(rd);
   vec3 col = sky;
   // the zeppelin
   vec3 zp = vec3(-10. + t*.5, 30., 60.);
@@ -351,22 +363,29 @@ vec3 render(vec2 uv, vec2 fc){
   }
   if(d < 100.){
     vec3 p = ro + rd*d, n = nrm(p);
-    vec3 alb = vec3(.55,.5,.45)*(.6 + .5*fbm3(p*1.2));
+    Mat wm = triMat(uWallC, uWallN, p*.4, n, 1., 1.2);
+    vec3 alb = wm.alb; n = wm.n;
     if(m == 0.){
-      vec4 v = voronoi(p.xz*2.2);                 // cobblestones
-      alb = vec3(.35,.32,.3)*(.6 + .5*hash12(v.zw))*smoothstep(.0,.08,v.y);
+      Mat cm = planarMat(uCobC, uCobN, p.xz*.4, n, 1.3);
+      alb = cm.alb; n = cm.n;
     }
     if(m == 2. || m == 3.) alb = vec3(.08);
     float dif = sat(dot(n, SUN));
-    col = alb*(dif*2. + .5*(n.y*.5+.5));
+    col = alb*dif*2.2 + ambPBR(alb, .7, 0., n, -rd, 1.)*.9;
     col = mix(col, sky, 1.-exp(-d*.02));
   }
   return col;
 }
 `;
 
+export const sepia = {
+  glsl: sepiaGLSL,
+  uses: { uEnv: 'env:overcast', uCob: 'mat:cobble', uWall: 'mat:sandbrick' },
+  env: { rot: 0.0, gain: 1.0 },
+};
+
 // 17. Glass city -- threading glass towers above a sea of cloud.
-export const neon = /* glsl */ `
+const neonGLSL = /* glsl */ `
 float map(vec3 p, out float m){
   vec2 c = floor(p.xz/16.);
   vec2 q = mod(p.xz, 16.) - 8.;
@@ -383,11 +402,7 @@ float map(vec3 p, out float m){
 float map(vec3 p){ float m; return map(p, m); }
 vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
 
-vec3 sky(vec3 rd){
-  vec3 c = mix(vec3(.7,.88,.95), vec3(.08,.35,.6), sat(rd.y*1.3));
-  c += vec3(1.)*pow(sat(dot(rd, normalize(vec3(-.4,.35,1.)))), 30.)*4.;
-  return c;
-}
+vec3 sky(vec3 rd){ return envSky(rd)*vec3(.8,1.,1.05); }
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
@@ -438,7 +453,14 @@ vec3 render(vec2 uv, vec2 fc){
     col += vec3(.8,1.,1.)*.0003/(dot(v,v)+.00008);
   }
   // the blinding exit
-  col += vec3(1.,.9,.8)*smoothstep(1.7, 2.3, t)*4.;
+  col += vec3(1.,.9,.8)*smoothstep(uDur - .6, uDur, t)*4.;
   return col;
 }
 `;
+
+export const neon = {
+  glsl: neonGLSL,
+  uses: { uEnv: 'env:haze' },
+  env: { rot: 0.0, gain: 1.0 },
+};
+

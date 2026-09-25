@@ -331,8 +331,14 @@ def main():
             manifest['mat'][name] = build_material(name, pid, res)
     if not only or 'vol' in only:
         for name, (pid, n, nc) in MODELS.items():
+            meta = os.path.join(OUT, 'vol', f'{name}.json')
+            if os.path.exists(meta):
+                manifest['vol'][name] = json.load(open(meta))
+                continue
             print('model', name, pid, flush=True)
             manifest['vol'][name] = build_model(name, pid, n, nc)
+            json.dump(manifest['vol'][name], open(meta, 'w'))
+            json.dump(manifest, open(mpath, 'w'), indent=1)
     if not only or 'ui' in only:
         print('title', flush=True)
         manifest['ui'] = build_title()

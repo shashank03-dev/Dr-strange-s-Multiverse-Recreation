@@ -1,8 +1,48 @@
 // Realms 7-11: ocean, Manhattan, machine, boneyard, primeval jungle.
 
 // 7. Ocean -- sinking through sunlit water above a coral slope.
-export const ocean = /* glsl */ `
+const oceanGLSL = /* glsl */ `
+uniform sampler2D uSandC, uSandN, uCoralC, uCoralN, uWoodC, uWoodN;
+uniform sampler3D uWhaleS, uWhaleCol, uShipS, uShipCol, uSharkS, uSharkCol;
+uniform float uWhaleR, uShipR, uSharkR;
+uniform vec3 uWhaleE, uShipE, uSharkE;
 const vec3 SUN = normalize(vec3(-.35, 1., .25));
+
+// A whale glides towards us and passes overhead; its tail beats slowly.
+vec3 whaleLocal(vec3 p){
+  vec3 q = p - vec3(5. - uT*.3, 2.6 - uT*.5, 30. - uT*3.);
+  q.xz *= rot(3.1416 + .15);
+  q /= 6.5;
+  q.y -= .07*sin(q.z*3. + uT*1.8)*smoothstep(.1, -.8, q.z);
+  return q + vec3(0., .25, 0.);
+}
+float whale(vec3 p){
+  vec3 q = whaleLocal(p);
+  return max(sdVol(uWhaleS, uWhaleR, uWhaleE, q), -(q.y + .08))*6.5*.8;   // cut away the statue's plinth
+}
+vec3 shipLocal(vec3 p){
+  vec3 q = p - vec3(5.5, -9.2 + 5.5*.55 + 1.1, 17.);
+  q.xy *= rot(.28); q.xz *= rot(.7);
+  return q/5.5;
+}
+float ship(vec3 p){ return sdVol(uShipS, uShipR, uShipE, shipLocal(p))*5.5; }
+vec3 sharkLocal(vec3 p, float k){
+  float a = uT*.35 + k*3.1;
+  vec3 c = vec3(1. + 5.*cos(a), -3. + k*1.2, 14. + 5.*sin(a));
+  vec3 q = p - c;
+  q.xz *= rot(-a - k*3.1416);
+  q /= 1.6;
+  q.x += .05*sin(q.z*6. + uT*6.);
+  return q + vec3(0., .3, 0.);
+}
+float shark(vec3 p){
+  float d = 1e9;
+  for(int k=0;k<2;k++){
+    vec3 q = sharkLocal(p, float(k));
+    d = min(d, max(sdVol(uSharkS, uSharkR, uSharkE, q), -(q.y + .05))*1.6*.8);
+  }
+  return d;
+}
 
 float caustic(vec2 uv, float time){
   vec2 p = mod(uv*TAU, TAU) - 250.;
@@ -58,8 +98,8 @@ float fish(vec3 p, float t, out float fid){
   fid = h.x;
   r -= (h-.5)*.5;
   r.x += .08*sin(t*6. + h.y*20.);
-  float body = sdEllipsoid(r, vec3(.14,.06,.025));
-  float tail = sdBox(r - vec3(-.16, 0., 0.), vec3(.035, .05 + .02*sin(t*18.+h.z*9.), .008));
+  float body = sdEllipsoid(r, vec3(.1,.038,.018));
+  float tail = sdBox(r - vec3(-.115, 0., 0.), vec3(.025, .032 + .012*sin(t*18.+h.z*9.), .006));
   float d = min(body, tail);
   return (h.z < .8) ? 1. : d;
 }
@@ -72,6 +112,12 @@ float map(vec3 p, out float m, out float id){
   if(c < d){ d = c; m = 1.; id = cid; }
   float fid; float f = fish(p, uT, fid);
   if(f < d){ d = f; m = 2.; id = fid; }
+  float w = whale(p);
+  if(w < d){ d = w; m = 3.; }
+  float sp = ship(p);
+  if(sp < d){ d = sp; m = 4.; }
+  float sk = shark(p);
+  if(sk < d){ d = sk; m = 5.; }
   return d;
 }
 float map(vec3 p){ float m, id; return map(p, m, id); }
@@ -86,33 +132,45 @@ vec3 water(vec3 rd, float depth){
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
-  vec3 ro = vec3(-4. + t*.9, 2.5 - t*1.1, t*1.6);
+  vec3 ro = vec3(-4. + t*.8, 2.5 - t*.95, t*1.6);
   vec3 ta = ro + vec3(-.1, -.38 - .1*sin(t*.6), 1.);
   vec3 rd = camRay(uv, ro, ta, -.55 + t*.12, 1.15);
 
   float d = 0., m = 0., id = 0.;
-  for(int i=0;i<100;i++){
+  for(int i=0;i<110;i++){
     vec3 p = ro + rd*d;
     float h = map(p, m, id);
-    if(abs(h) < .001*d || d > 40.) break;
+    if(abs(h) < .001*d || d > 45.) break;
     d += h*.8;
   }
   vec3 bg = water(rd, ro.y);
   vec3 col = bg;
-  if(d < 40.){
+  if(d < 45.){
     vec3 p = ro + rd*d, n = nrm(p);
     vec3 alb;
     if(m == 0.){
-      alb = mix(vec3(.75,.7,.55), vec3(.55,.5,.38), fbm3(p.xz*2.));
-      // sea-grass tufts
+      Mat sm = triMat(uSandC, uSandN, p*.35, n, 1., 1.);
+      alb = sm.alb*1.15; n = sm.n;
       float gr = smoothstep(.55,.75,fbm3(p.xz*.8))*step(.5, noise(p.xz*14.));
       alb = mix(alb, vec3(.12,.3,.12), gr);
     } else if(m == 1.){
-      alb = id < .2 ? vec3(1.,.35,.2) : id < .4 ? vec3(.95,.6,.2) : id < .7 ? vec3(.8,.2,.7) : vec3(1.,.45,.55);
-      alb *= .6 + .6*noise(p*9.);
+      Mat cm = triMat(uCoralC, uCoralN, p*.9, n, 1., 1.5);
+      vec3 tint = id < .2 ? vec3(1.,.35,.2) : id < .4 ? vec3(.95,.6,.2) : id < .7 ? vec3(.8,.2,.7) : vec3(1.,.45,.55);
+      alb = tint*cm.alb*2.2; n = cm.n;
+    } else if(m == 3.){
+      vec3 q = whaleLocal(p);
+      alb = mix(vec3(.05,.07,.09), vec3(.45,.5,.5), smoothstep(-.02, -.12, q.y - q.z*.05))*(.8 + .4*volAlbedo(uWhaleCol, q).r);
+      alb *= .8 + .4*fbm3(p*3.);                                            // barnacles and scars
+    } else if(m == 4.){
+      Mat wm = triMat(uWoodC, uWoodN, p*.8, n, 1., 1.);
+      alb = mix(wm.alb, vec3(.15,.3,.15), smoothstep(.3, .9, n.y)*.7)*.8;   // algae grows on the upper decks
+      n = wm.n;
+    } else if(m == 5.){
+      vec3 q = sharkLocal(p, 0.);
+      alb = mix(vec3(.18,.22,.26), vec3(.6,.62,.6), smoothstep(.0, -.1, n.y));
     } else {
-      alb = id < .7 ? vec3(1.,.75,.1) : vec3(.3,.6,1.);
-      alb = mix(alb, vec3(.95), step(.5, fract(p.x*9.)));
+      alb = mix(vec3(.55,.62,.68), id < .5 ? vec3(.9,.7,.2) : vec3(.3,.5,.8), .35);
+      alb *= .8 + .3*smoothstep(.0, .5, n.y);
     }
     float dif = sat(dot(n, SUN));
     float cau = caustic(p.xz*.25 + p.y*.05, t*.8)*2.5;
@@ -137,11 +195,6 @@ vec3 render(vec2 uv, vec2 fc){
   col += vec3(.35,.7,.8)*sh/14.*min(tm,25.)*.09*(1.+pow(sat(dot(rd,SUN)),2.)*2.);
   // Snell's window glitter when looking up
   col += vec3(.7,.95,1.)*caustic(rd.xz/max(rd.y,.1)*.3, t)*smoothstep(.3,.9,rd.y)*1.5;
-  // a big fish silhouette cruising in the distance
-  vec3 bp = vec3(4. - t*1.5, -1.5, 16.);
-  vec3 q = ro + rd*max(dot(bp-ro,rd),0.) - bp;
-  float big = min(sdEllipsoid(q, vec3(1.4,.32,.3)), sdEllipsoid(q - vec3(1.5, 0., 0.) , vec3(.25,.45 + .1*sin(t*5.),.05)));
-  col = mix(col, bg*.45, smoothstep(.03,-.03,big)*.55);
   // rising bubbles + marine snow
   for(int i=0;i<40;i++){
     vec3 h = hash31(float(i)*3.1);
@@ -156,9 +209,20 @@ vec3 render(vec2 uv, vec2 fc){
 }
 `;
 
+export const ocean = {
+  glsl: oceanGLSL,
+  uses: {
+    uSand: 'mat:sand', uCoral: 'mat:coral', uWood: 'mat:darkwood',
+    uWhale: 'vol:whale', uShip: 'vol:ship', uShark: 'vol:shark',
+  },
+};
+
 // 8. Manhattan -- tumbling across a sunlit street as glass rains down.
-export const city = /* glsl */ `
-const vec3 SUN = normalize(vec3(.35, .8, -.48));
+const cityGLSL = /* glsl */ `
+uniform sampler2D uBrickC, uBrickN, uFacadeC, uFacadeN, uPlasterC, uPlasterN, uAsphaltC, uAsphaltN, uPaveC, uPaveN, uMetalC, uMetalN;
+uniform sampler3D uHydrantS, uHydrantCol, uLampS, uLampCol;
+uniform float uHydrantR, uLampR;
+uniform vec3 uHydrantE, uLampE;
 
 float lotH(float lot, float side){ return 14. + 40.*pow(hash11(lot*1.7 + side*11.), 2.); }
 
@@ -170,17 +234,14 @@ float building(vec3 p, out float lot, out float side){
   float setback = .6*hash11(lot*3.3+side);
   float h = lotH(lot, side);
   float d = sdBox(vec3(q.x - 16. - setback, q.y - h*.5, lz), vec3(6., h*.5, 4.45));
-  // window recesses & cornices
   float fy = mod(q.y, 3.2) - 1.6;
   float fz = mod(lz + 4.5, 1.8) - .9;
   float win = sdBox2(vec2(fy + .2, fz), vec2(.8, .5));
   float face = q.x - 10. - setback;
   d = max(d, -max(max(-face, face - .4), win));
-  // pilasters between window bays
   float pz = mod(lz + 4.5, 3.6) - 1.8;
   float pil = sdBox(vec3(face + .12, q.y - h*.5, pz), vec3(.14, h*.5, .14));
   d = min(d, pil);
-  // iron fire escapes on the older buildings
   if(hash11(lot*5.1 + side) > .45){
     float fy2 = mod(q.y - 3.2, 3.2) - .05;
     float esc = sdBox(vec3(face + .75, fy2, lz - 1.), vec3(.7, .04, 1.9));
@@ -192,13 +253,13 @@ float building(vec3 p, out float lot, out float side){
   }
   float cornice = sdBox(vec3(face - .15, mod(q.y + .5, 3.2) - 1.6, lz), vec3(.2, .08, 4.5));
   d = min(d, max(cornice, q.y - h));
-  // roof cap
   d = min(d, sdBox(vec3(face-.2, q.y - h, lz), vec3(.4, .35, 4.5)));
+  // ground-floor storefront awning
+  d = min(d, sdBox(vec3(face + .9, q.y - 3.3, lz), vec3(.9, .05, 3.6)));
   return d;
 }
 
 float car(vec3 p, out float kind){
-  // three parked / stalled cars along the street
   float d = 1e9; kind = 0.;
   for(int i=0;i<4;i++){
     vec3 h = hash31(float(i)*4.1+2.);
@@ -208,116 +269,136 @@ float car(vec3 p, out float kind){
     float cab = sdRBox(q - vec3(0., .55, -.1), vec3(.8, .35, 1.2), .3);
     float wheels = sdCylY((vec3(abs(q.x)-.9, q.y+.35, abs(q.z)-1.4)).yxz, .38, .2);
     float cd = min(smin(b, cab, .2), wheels);
-    if(cd < d){ d = cd; kind = (h.x < .7 ? 1. : 2.) + (cab < b ? .5 : 0.); }
+    if(cd < d){ d = cd; kind = (h.x < .7 ? 1. : 2.) + (cab < b ? .5 : 0.) + (wheels < min(b, cab) ? .25 : 0.); }
   }
   return d;
 }
 
+// street furniture from the baked models
+vec3 hydrantLocal(vec3 p){ return (vec3(abs(p.x) - 11.1, p.y, mod(p.z + 5., 27.) - 13.5) - vec3(0., uHydrantE.y*.55, 0.))/.55; }
+vec3 lampLocal(vec3 p){ vec3 q = vec3(abs(p.x) - 11.7, p.y, mod(p.z, 18.) - 9.); q.xz *= rot(1.5708*sign(p.x)); return (q - vec3(0., uLampE.y*3.2, 0.))/3.2; }
+
 float map(vec3 p, out float m, out float id){
   float lot, side;
   float d = p.y; m = 0.; id = 0.;
-  // sidewalks
   float sw = sdBox(vec3(abs(p.x) - 13., p.y - .075, p.z), vec3(3., .15, 1000.));
   if(sw < d){ d = sw; m = 1.; }
   float b = building(p, lot, side);
   if(b < d){ d = b; m = 2.; id = lot + side*.5; }
   float k; float c = car(p, k);
   if(c < d){ d = c; m = 3.; id = k; }
-  // traffic light poles
   vec3 q = vec3(abs(p.x) - 10.3, p.y, mod(p.z, 27.) - 13.5);
   float pole = sdCylY(q - vec3(0,3.,0), .09, 3.);
   pole = min(pole, sdBox(q - vec3(-2.,5.9,0), vec3(2., .06, .06)));
   pole = min(pole, sdBox(q - vec3(-3.4,5.3,0), vec3(.22, .55, .22)));
   if(pole < d){ d = pole; m = 4.; }
+  float hy = sdVol(uHydrantS, uHydrantR, uHydrantE, hydrantLocal(p))*.55;
+  if(hy < d){ d = hy; m = 5.; }
+  float lp = sdVol(uLampS, uLampR, uLampE, lampLocal(p))*3.2;
+  if(lp < d){ d = lp; m = 6.; }
   return d;
 }
 float map(vec3 p){ float m, id; return map(p, m, id); }
 vec3 nrm(vec3 p){ vec2 e = vec2(.004,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
 float shadow(vec3 ro, vec3 rd){
   float r = 1., t = .05;
-  for(int i=0;i<28;i++){ float h = map(ro+rd*t); r = min(r, 10.*h/t); t += clamp(h, .1, 3.); if(r < .01 || t > 60.) break; }
+  for(int i=0;i<30;i++){ float h = map(ro+rd*t); r = min(r, 10.*h/t); t += clamp(h, .1, 3.); if(r < .01 || t > 60.) break; }
   return sat(r);
-}
-vec3 sky(vec3 rd){
-  vec3 c = mix(vec3(.75,.85,.95), vec3(.25,.5,.9), pow(sat(rd.y), .6));
-  c += vec3(1.,.9,.7)*pow(sat(dot(rd, SUN)), 200.)*20. + vec3(1.,.8,.6)*pow(sat(dot(rd,SUN)),6.)*.4;
-  return c;
 }
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
-  vec3 ro = vec3(-3. + t*2.2, 1.4 + .6*sin(t*1.3), -6. + t*3.);
-  vec3 ta = ro + vec3(.2 - t*.25, -.05, 1.);
-  vec3 rd = camRay(uv, ro, ta, .55 - t*.42, 1.0);
+  vec3 SUN = envSunDir();
+  vec3 ro = vec3(-3. + t*1.6, 1.4 + .6*sin(t*1.3), -6. + t*3.);
+  vec3 ta = ro + vec3(.2 - t*.2, -.05, 1.);
+  vec3 rd = camRay(uv, ro, ta, .55 - t*.3, 1.0);
   float d = 0., m = 0., id = 0.;
-  for(int i=0;i<110;i++){
+  for(int i=0;i<120;i++){
     float h = map(ro + rd*d, m, id);
-    if(abs(h) < .0008*d || d > 150.) break;
+    if(abs(h) < .0007*d || d > 170.) break;
     d += h*.9;
   }
-  vec3 col = sky(rd);
-  // far skyline silhouettes in haze
-  if(d >= 150.){
-    float sk = 0.;
+  vec3 col = envSky(rd);
+  if(d >= 170.){
     float ax = atan(rd.x, rd.z);
     float hh = .08 + .25*pow(hash11(floor(ax*40.)), 3.) + .06*hash11(floor(ax*90.));
-    if(rd.y < hh && abs(ax) < .6) col = mix(col, vec3(.55,.65,.78), .7);
+    if(rd.y < hh && abs(ax) < .6) col = mix(col, envLod(rd, 4.)*vec3(.8,.85,.95), .75);
   }
-  if(d < 150.){
-    vec3 p = ro + rd*d, n = nrm(p);
-    vec3 alb = vec3(.3); float spec = .1; float glass = 0.;
-    if(m == 0.){ // asphalt with lane markings and a crosswalk
-      alb = vec3(.13,.13,.14)*(.7+.5*fbm3(p.xz*3.));
+  if(d < 170.){
+    vec3 p = ro + rd*d, n = nrm(p), v = -rd;
+    Mat mt; mt.alb = vec3(.4); mt.rough = .6; mt.n = n; mt.ao = 1.; mt.h = .5;
+    float metal = 0., clear = 0.;
+    vec3 emit = vec3(0);
+    if(m == 0.){
+      mt = planarMat(uAsphaltC, uAsphaltN, p.xz*.22, n, 1.);
       float lane = smoothstep(.08,.05,abs(abs(p.x)-.15))*step(.5,fract(p.z*.1));
-      float cw = step(abs(mod(p.z,27.)-13.5-4.), 1.6)*step(.5, fract(p.x*.55));
-      alb = mix(alb, vec3(.8,.65,.2), lane*.9);
-      alb = mix(alb, vec3(.75), cw*.8*step(abs(p.x),9.8));
+      float cw = step(abs(mod(p.z,27.)-13.5-4.), 1.6)*step(.5, fract(p.x*.55))*step(abs(p.x),9.8);
+      float paintWear = smoothstep(.3, .7, mt.h);
+      mt.alb = mix(mt.alb, vec3(.8,.62,.15), lane*.9*paintWear);
+      mt.alb = mix(mt.alb, vec3(.78), cw*.85*paintWear);
+      mt.rough = mix(mt.rough, .45, lane + cw);
     } else if(m == 1.){
-      vec2 g = fract(p.xz*.5);
-      alb = vec3(.45,.43,.4)*(.75+.25*step(.04, min(g.x,g.y)));
+      mt = planarMat(uPaveC, uPaveN, p.xz*.35, n, 1.);
     } else if(m == 2.){
       float hb = hash11(floor(id)*7.3 + fract(id)*20.);
-      alb = hb < .33 ? vec3(.45,.22,.14) : hb < .66 ? vec3(.62,.55,.45) : vec3(.18,.2,.22);
-      alb *= .75 + .4*fbm3(p*1.3);
-      // window glass lives in the recesses
       vec3 q = p; q.x = abs(q.x);
+      if(hb < .45) mt = triMat(uBrickC, uBrickN, p*.5, n, 1., 1.);
+      else if(hb < .75) { mt = triMat(uPlasterC, uPlasterN, p*.4, n, 1., 1.); mt.alb *= vec3(1.05, .97, .88); }
+      else mt = triMat(uFacadeC, uFacadeN, p*.35, n, 1., 1.);
       float face = q.x - 10. - .6*hash11(floor(q.z/9.)*3.3+sign(p.x));
-      glass = step(face,.3)*step(.02,face)*step(.5,abs(n.x));
-      if(glass > .5){
+      if(step(face,.4)*step(.02,face)*step(.5,abs(n.x)) > .5){
         vec2 wc = floor(vec2(q.y/3.2, (mod(q.z,9.)+4.5)/1.8));
-        float lit = step(.8, hash12(wc + floor(id)*13.));
-        alb = vec3(.03,.035,.04) + vec3(1.,.7,.4)*lit*.25; spec = .6;
+        float lit = step(.78, hash12(wc + floor(id)*13.));
+        mt.alb = vec3(.02); mt.rough = .04; metal = 0.; clear = 1.;
+        emit = vec3(1.,.72,.42)*lit*.35;
       }
-      if(face < -.05) alb = vec3(.06,.05,.05);   // fire escapes: black iron
+      if(face < -.05){ mt = triMat(uMetalC, uMetalN, p*2., n, 1., .6); mt.alb *= .12; metal = .8; }
+      if(abs(q.y - 3.3) < .07 && face < -.02) { mt.alb = hb < .5 ? vec3(.35,.05,.04) : vec3(.05,.2,.12); mt.rough = .7; metal = 0.; }
     } else if(m == 3.){
-      alb = id < 2. ? vec3(1.,.72,.05) : vec3(.03);
-      if(fract(id) > .1){ alb = vec3(.02,.03,.04); spec = .8; } else spec = .5;
-    } else { alb = vec3(.1,.2,.12); }
+      bool taxi = id < 2.;
+      mt.alb = taxi ? vec3(.75,.46,.02) : vec3(.015); mt.rough = .35; clear = .5;
+      if(fract(id) >= .5){ mt.alb = vec3(.01); mt.rough = .05; }
+      if(fract(id) == .25 || fract(id) == .75){ mt.alb = vec3(.02); mt.rough = .9; clear = 0.; }
+    } else if(m == 4.){
+      mt = triMat(uMetalC, uMetalN, p*2., n, 1., .5); mt.alb *= vec3(.12,.2,.14)*2.; metal = .6;
+    } else if(m == 5.){
+      mt.alb = volAlbedo(uHydrantCol, hydrantLocal(p)); mt.rough = .45; metal = .2;
+    } else {
+      mt = triMat(uMetalC, uMetalN, p*3., n, 1., .5); mt.alb *= vec3(.08,.1,.09); metal = .8;
+      emit = vec3(1.,.85,.6)*step(uLampE.y*.82, lampLocal(p).y)*.0;
+    }
     float sh = shadow(p + n*.02, SUN);
-    float dif = sat(dot(n, SUN))*sh;
-    float amb = .5 + .5*n.y;
-    col = alb*(dif*vec3(1.,.93,.8)*3.4 + amb*vec3(.45,.55,.7)*1.1 + (1.-amb)*vec3(.35,.3,.25)*.6);
-    vec3 r = reflect(rd, n);
-    float fr = fresnel(n, rd, .04);
-    col += sky(r)*fr*spec*(.4+.6*sh);
-    col += vec3(1.,.9,.7)*pow(sat(dot(r,SUN)), 60.)*spec*sh*4.;
-    col = mix(col, vec3(.7,.78,.88), 1.-exp(-d*.012));
+    col = litPBR(mt.alb, mt.rough, metal, mt.n, v, SUN, vec3(1.,.93,.82)*5.*sh);
+    col += mt.alb*vec3(.55,.45,.35)*.18*sat(-n.y*.5 + .6)*(1. - metal);   // warm bounce off the street
+    col += ambPBR(mt.alb, mt.rough, metal, mt.n, v, mt.ao);
+    // clear coat on paint and glass: a sharp reflection of the real sky
+    if(clear > 0.) col += envLod(reflect(rd, n), .5)*fresnel(n, rd, .04)*clear*(.5 + .5*sh);
+    col += emit;
+    col = mix(col, envLod(rd, 5.)*vec3(.95,.97,1.), 1.-exp(-d*.009));
   }
-  // falling glass shards glinting in the sun
   for(int i=0;i<36;i++){
     vec3 h = hash31(float(i)*1.3+.5);
     vec3 sp = ro + vec3((h.x-.5)*8., mod(h.y*6. - t*(2.+h.z*3.), 6.) - 2., 1. + h.z*9.);
     vec3 nn = normalize(hash31(float(i)+floor(t*4.)) - .5);
-    vec3 v = ro + rd*max(dot(sp-ro,rd),0.) - sp;
+    vec3 v2 = ro + rd*max(dot(sp-ro,rd),0.) - sp;
     float glint = pow(sat(dot(reflect(rd, nn), SUN)), 8.);
-    col += vec3(.9,.97,1.)*(.00025 + glint*.004)/(dot(v,v)*1.5+.00015)*.3;
+    col += vec3(.9,.97,1.)*(.00025 + glint*.004)/(dot(v2,v2)*1.5+.00015)*.3;
   }
   return col;
 }
 `;
+export const city = {
+  glsl: cityGLSL,
+  uses: {
+    uEnv: 'env:day', uBrick: 'mat:brick', uFacade: 'mat:facade', uPlaster: 'mat:plaster', uAsphalt: 'mat:asphalt',
+    uPave: 'mat:pavement', uMetal: 'mat:metal', uHydrant: 'vol:hydrant', uLamp: 'vol:streetlamp',
+  },
+  env: { rot: -2.17, gain: 2.6 },
+};
 
 // 9. Machine realm -- down a shaft of white conduits and cyan light.
-export const machine = /* glsl */ `
+const machineGLSL = /* glsl */ `
+uniform sampler2D uMetalC, uMetalN;
 float pipes(vec2 w, float x, float r, float sp){ float q = mod(w.x, sp) - sp*.5; return length(vec2(q, x)) - r; }
 
 float map(vec3 p, out float m){
@@ -365,6 +446,8 @@ vec3 render(vec2 uv, vec2 fc){
     vec3 p = ro + rd*d, n = nrm(p);
     float o = ao(p, n);
     vec3 alb = m == 1. ? vec3(.85,.88,.9) : m == 2. ? vec3(.45,.5,.55) : vec3(.25,.3,.33);
+    Mat pm = triMat(uMetalC, uMetalN, p*.7, n, 1., .8);
+    alb *= mix(vec3(1.), pm.alb*2.2, .6); n = pm.n;                 // painted plate, scuffed and riveted
     // panel seams on the shell
     if(m == 0.){ vec2 g = fract(vec2(p.z*.25, (p.x+p.y)*.25)); alb *= .7 + .3*step(.03, min(g.x,g.y)); }
     vec3 key = normalize(vec3(.3, .6, 1.));
@@ -392,8 +475,23 @@ vec3 render(vec2 uv, vec2 fc){
 }
 `;
 
+export const machine = { glsl: machineGLSL, uses: { uMetal: 'mat:metal' } };
+
 // 10. Boneyard -- flying through the rib cage of something colossal.
-export const boneyard = /* glsl */ `
+const boneyardGLSL = /* glsl */ `
+uniform sampler2D uGroundC, uGroundN, uBoneC, uBoneN;
+uniform sampler3D uTreeS, uTreeCol;
+uniform float uTreeR;
+uniform vec3 uTreeE;
+// dead trees, bleached and leaning, scattered among the ribs
+vec3 treeLocal(vec3 p){
+  vec2 c = floor(p.xz/9.);
+  vec2 h = hash22(c + 4.);
+  vec3 q = vec3(mod(p.x, 9.) - 4.5 - (h.x - .5)*3., p.y + .3, mod(p.z, 9.) - 4.5 - (h.y - .5)*3.);
+  q.xz *= rot(h.x*6.28); q.xy *= rot((h.y - .5)*.4);
+  if(abs(p.x) < 5. || h.x < .35) q.y += 100.;   // keep the flight path clear
+  return (q - vec3(0., uTreeE.y*3., 0.))/3.;
+}
 float bone(vec3 p){
   // ribs: arcs hanging from a spine at y = 9
   float cz = floor(p.z/3.2);
@@ -417,6 +515,7 @@ float map(vec3 p, out float m){
   m = 0.;
   float g = p.y + .8*fbm3(p.xz*.3) + .3*noise(p.xz*2.);
   float b = bone(p);
+  b = min(b, sdVol(uTreeS, uTreeR, uTreeE, treeLocal(p))*3.);
   vec2 bc = floor(p.xz/3.);
   vec2 bq = mod(p.xz, 3.) - 1.5;
   vec2 bh = hash22(bc);
@@ -452,8 +551,9 @@ vec3 render(vec2 uv, vec2 fc){
   vec3 haze = mix(vec3(.35,.1,.03), vec3(.8,.35,.1), sat(rd.y*2.+.3));
   if(d < 70.){
     vec3 p = ro + rd*d, n = nrm(p);
-    vec3 alb = m == 1. ? vec3(.55,.45,.35)*(.6+.5*fbm3(p*4.)) : vec3(.12,.07,.04)*(.6+.8*fbm3(p.xz*4.));
-    if(m == 0.) alb = mix(alb, vec3(.35,.25,.08), smoothstep(.55,.7,noise(p.xz*9.))); // dry grass
+    vec3 alb;
+    if(m == 1.){ Mat bm = triMat(uBoneC, uBoneN, p*.8, n, 1., 1.2); alb = bm.alb*vec3(1.,.92,.8)*.9; n = bm.n; }
+    else { Mat gm = triMat(uGroundC, uGroundN, p*.3, n, 1., 1.2); alb = gm.alb*vec3(.55,.4,.3); n = gm.n; }
     vec3 lc = vec3(0);
     for(int i=0;i<10;i++){
       vec3 fp = firePos(i); fp.z += floor(ro.z/45.)*45.;
@@ -485,8 +585,14 @@ vec3 render(vec2 uv, vec2 fc){
 }
 `;
 
+export const boneyard = {
+  glsl: boneyardGLSL,
+  uses: { uGround: 'mat:dryground', uBone: 'mat:plaster', uTree: 'vol:deadtree' },
+};
+
 // 11. Primeval -- plunging down a mossy cliff into sunlit rainforest.
-export const jungle = /* glsl */ `
+const jungleGLSL = /* glsl */ `
+uniform sampler2D uBarkC, uBarkN, uMossC, uMossN, uLeafC, uLeafN;
 const vec3 SUN = normalize(vec3(-.5, .9, .4));
 
 float cliff(vec3 p){
@@ -536,8 +642,7 @@ vec3 render(vec2 uv, vec2 fc){
     if(h < .002*d || d > 70.) break;
     d += h*.8;
   }
-  vec3 sky = mix(vec3(.5,.65,.45), vec3(1.,1.,.9), sat(rd.y));
-  vec3 col = sky;
+  vec3 col = envSky(rd);
   float tm = min(d, 70.);
   if(d < 70.){
     vec3 p = ro + rd*d, n = nrm(p);
@@ -545,22 +650,25 @@ vec3 render(vec2 uv, vec2 fc){
     float leafV = hash12(lv.zw);
     vec3 alb;
     if(m == 0.){
-      alb = mix(vec3(.3,.25,.18), vec3(.12,.28,.06), smoothstep(.3,.6,fbm3(p*.8)));  // rock & moss
-      alb *= .7 + .5*fbm3(p*6.);
+      Mat mm = triMat(uMossC, uMossN, p*.35, n, 1., 1.3);
+      alb = mm.alb*1.1; n = mm.n;
     } else if(m == 1.){
-      alb = vec3(.25,.18,.12)*(.5+.7*fbm3(vec3(p.xz*2., p.y*.3)));
-      alb = mix(alb, vec3(.14,.28,.07), smoothstep(.45,.7,fbm3(p*1.5)));
+      Mat bm = triMat(uBarkC, uBarkN, vec3(p.x, p.y*.35, p.z)*.6, n, 1., 1.5);
+      alb = mix(bm.alb, vec3(.14,.28,.07), smoothstep(.5,.75,fbm3(p*1.5))); n = bm.n;
     } else if(m == 2.){
-      alb = mix(vec3(.06,.2,.03), vec3(.35,.55,.08), leafV)*(.6 + .6*smoothstep(.0,.15,lv.y));
+      Mat lm = triMat(uLeafC, uLeafN, p*.6, n, 1., 1.2);
+      alb = mix(vec3(.06,.2,.03), vec3(.35,.55,.08), leafV)*(.6 + .6*smoothstep(.0,.15,lv.y))*lm.alb*3.; n = lm.n;
     } else {
-      alb = mix(vec3(.1,.08,.04), vec3(.12,.28,.05), smoothstep(.3,.6,fbm3(p.xz*2.)));
+      Mat gm = triMat(uLeafC, uLeafN, p*.4, n, 1., 1.);
+      alb = gm.alb*.9; n = gm.n;
     }
     float dapple = smoothstep(.3,.7,noise(p.yz*.35 + p.x*.2));
     float dif = sat(dot(n, SUN))*(.35 + .9*dapple);
     float trans = m == 2. ? pow(sat(dot(rd, SUN)), 2.)*1.2 : 0.;
     col = alb*(dif*vec3(1.,.95,.75)*3.2 + vec3(.3,.45,.3)*(n.y*.3+.7)*1.) + alb*vec3(.9,1.,.3)*trans;
     if(m == 2.) col += vec3(.9,1.,.7)*pow(sat(dot(reflect(rd,n), SUN)), 16.)*.6*dapple;   // waxy leaf glint
-    col = mix(col, vec3(.35,.5,.3), 1.-exp(-d*.02));
+    col += ambPBR(alb, .75, 0., n, -rd, 1.)*.5;
+    col = mix(col, envLod(rd, 5.)*vec3(.7,.9,.65), 1.-exp(-d*.02));
   }
   // sunbeams
   float sh = 0.;
@@ -579,7 +687,13 @@ vec3 render(vec2 uv, vec2 fc){
     vec3 v = ro + rd*max(dot(sp-ro,rd),0.) - sp;
     col += vec3(1.,1.,.8)*.0003/(dot(v,v)+.0001);
   }
-  col += vec3(.7,.85,1.)*smoothstep(1.5, 2.1, t)*3.;
+  col += vec3(.7,.85,1.)*smoothstep(uDur - .6, uDur, t)*3.;
   return col;
 }
 `;
+
+export const jungle = {
+  glsl: jungleGLSL,
+  uses: { uEnv: 'env:dawn', uBark: 'mat:bark', uMoss: 'mat:mossrock', uLeaf: 'mat:leaves' },
+  env: { rot: 1.85, gain: 1.1 },
+};

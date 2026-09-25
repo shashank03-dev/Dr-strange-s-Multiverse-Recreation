@@ -157,18 +157,21 @@ export function renderScore(duration) {
   // ---------------------------------------------------------------- scene design
   // The spark: a trembling high cluster swelling into the first flash.
   for (const [m, d] of [[86, 0], [93, 5], [100, -4], [98, 7]]) {
-    V({ out: music, send, sendAmt: 0.9, t0: 0.2, len: 3.2, vib: 12, vibRate: 7 + rnd() * 3,
-      env: (x) => 0.022 * Math.pow(Math.min(x / 2.2, 1), 2) * (x > 2.4 ? Math.exp(-(x - 2.4) * 5) : 1),
+    const sp = shot('eye').len;
+    V({ out: music, send, sendAmt: 0.9, t0: 0.2, len: sp + 0.6, vib: 12, vibRate: 7 + rnd() * 3,
+      env: (x) => 0.022 * Math.pow(Math.min(x / (sp - 0.6), 1), 2) * (x > sp - 0.2 ? Math.exp(-(x - sp + 0.2) * 5) : 1),
       oscs: [{ type: 'sin', f: mtof(m), detune: d }] });
   }
   // The rift: electric hum and crackling that intensify until we are pulled in.
-  zap(3.2, 8.5, 0.05);
-  crackle(3.6, 8.4, 30, 0.1);
-  crackle(6.2, 8.4, 60, 0.14);
+  const sanct = shot('sanctum');
+  zap(sanct.start + 0.6, sanct.end + 0.1, 0.05);
+  crackle(sanct.start + 1.0, sanct.end, 30, 0.1);
+  crackle(sanct.end - 2.4, sanct.end, 60, 0.14);
   // Wind of the fall.
+  const windA = shot('firehall').start - 0.2, windB = shot('rooftop').start + 0.7;
   V({
-    out: sfx, t0: 8.2, len: 38.3,
-    env: ramp([[0, 0], [0.6, 0.12], [ocean.start - 8.3, 0.12], [ocean.start - 7.8, 0.02], [ocean.end - 8.4, 0.02], [ocean.end - 7.8, 0.1], [37, 0.1], [38.3, 0]]),
+    out: sfx, t0: windA, len: windB - windA,
+    env: ramp([[0, 0], [0.6, 0.12], [ocean.start - windA - 0.1, 0.12], [ocean.start - windA + 0.4, 0.02], [ocean.end - windA - 0.2, 0.02], [ocean.end - windA + 0.4, 0.1], [windB - windA - 1.3, 0.1], [windB - windA, 0]]),
     oscs: [{ type: 'noise' }],
     filters: [{ type: 'bp', f: (x) => 700 + 500 * Math.sin(x * 1.7) + 400 * Math.sin(x * 4.3), q: 0.8 }],
   });
@@ -178,7 +181,7 @@ export function renderScore(duration) {
     V({ out: sfx, t0: t, len: 0.1, pan: rnd() * 1.4 - 0.7, env: adsr(0.002, 0.03 + rnd() * 0.03, 0, 0.06), oscs: [{ type: 'sin', f: expSweep(f, f * 2.8, 0.05) }] });
   }
   // Manhattan: a distant taxi horn.
-  V({ out: sfx, send, sendAmt: 0.6, t0: 21.1, len: 0.4, pan: 0.5, env: adsr(0.01, 0.03, 0.28, 0.05),
+  V({ out: sfx, send, sendAmt: 0.6, t0: shot('city').start + 0.9, len: 0.4, pan: 0.5, env: adsr(0.01, 0.03, 0.28, 0.05),
     oscs: [{ type: 'sqr', f: 415 }, { type: 'sqr', f: 349 }], filters: [{ type: 'lp', f: 1800, q: 1 }] });
   // Earth-616: the portal collapses, then birdsong in the quiet.
   {
@@ -193,18 +196,19 @@ export function renderScore(duration) {
   // Title: a bell motif over the last chord; a hit when the name burns in.
   {
     const t0 = shot('title').start;
-    for (const [m, dt] of [[74, 1.2], [81, 1.65], [77, 2.1], [76, 2.55], [74, 3.2]]) {
+    for (const [m, dt] of [[74, 1.4], [81, 2.1], [77, 2.8], [76, 3.5], [74, 4.4]]) {
       V({ out: music, send, sendAmt: 0.9, t0: t0 + dt, len: 3, env: adsr(0.003, 0.07, 0, 2.4),
         oscs: [{ type: 'sin', f: mtof(m) }, { type: 'sin', f: mtof(m) * 3.01, amp: 0.3 }] });
     }
-    reverseSwell(t0 + 3.8, 1.4, 0.22);
-    boom(t0 + 3.8, 0.9);
-    brass(t0 + 3.8, 'title', 0.11, 3.8);
+    reverseSwell(t0 + 5.6, 1.6, 0.22);
+    boom(t0 + 5.6, 0.9);
+    brass(t0 + 5.6, 'title', 0.11, 4.2);
   }
 
   // ---------------------------------------------------------------- mix
   // breaths: the music drops out for a beat before the biggest jumps
-  const duck = ramp([[0, 1], [24.8, 1], [25.1, 0.15], [25.4, 1], [34.9, 1], [35.3, 0.12], [35.6, 1], [45.0, 1], [45.35, 0.1], [45.6, 1]]);
+  const breath = (id) => { const t = shot(id).start; return [[t - 0.6, 1], [t - 0.3, 0.12], [t, 1]]; };
+  const duck = ramp([[0, 1], ...breath('boneyard'), ...breath('voxel'), ...breath('rooftop')]);
   for (let n = 0; n < N; n++) { const g = duck(n / SR); music.L[n] *= g; music.R[n] *= g; }
   filterBus(music, 'lp', ramp([[ocean.start - 0.1, 18000], [ocean.start + 0.25, 650], [ocean.end - 0.3, 650], [ocean.end + 0.1, 18000]]), 0.7);
   const mix = new Bus(N);

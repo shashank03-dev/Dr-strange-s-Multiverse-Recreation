@@ -9,7 +9,7 @@ export function makeTitleCanvas() {
   g.fillRect(0, 0, c.width, c.height);
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.fillStyle = '#fff';
+  g.fillStyle = '#f00';
 
   const serif = 'Cinzel, "Trajan Pro", Georgia, serif';
   // red channel: main title
