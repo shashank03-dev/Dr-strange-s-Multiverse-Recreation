@@ -22,7 +22,8 @@ float map(vec3 p, out float m){
   return min(st, env);
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .01;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 eyeGlow(vec3 ro, vec3 rd, float tmax, float t){
   vec3 c = vec3(0);
@@ -99,7 +100,7 @@ vec3 render(vec2 uv, vec2 fc){
     float h = q.y + 1.2;
     if(h > 2.4) continue;
     vec3 w = q*vec3(.45,.6,.45) - vec3(0., t*1.6, t*.6);
-    float n = fbm3(w + fbm3(w*1.7)*.8);
+    float n = fbm3(w + noise(w*1.7)*.8);
     float dens = sat((n - .35 - h*.12)*2.2)*smoothstep(2.4, .2, h);
     if(dens > .001){
       float temp = sat(1.1 - h*.38)*sat(n*1.4-.2);
@@ -307,7 +308,8 @@ float map(vec3 p){
   // a floor/ceiling of massive columns
   return min(d, 2.);
 }
-vec3 nrm(vec3 p){ vec2 e = vec2(.004,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .004;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 env(vec3 rd, vec3 L){
   float s = sat(dot(rd, L));
@@ -370,7 +372,7 @@ float map(vec3 p){
   float w = 8.5 + 3.*sin(p.z*.07 + 1.) - .05*min(p.y, 0.);
   float x = abs(p.x - cx);
   float wall = w - x;
-  wall += 2.2*fbm3(vec3(p.x*.1, p.y*.35, p.z*.08));
+  wall += 2.2*noise(vec3(p.x*.1, p.y*.35, p.z*.08)) + .6*noise(vec3(p.x*.3, p.y*1., p.z*.25));
   // ledges: layered sandstone shelves stepping out of the wall
   float ly = strata(p.y)*.55;
   wall += .9*smoothstep(.55,.85,fract(ly + .3*noise(p.xz*.15)));
@@ -378,10 +380,11 @@ float map(vec3 p){
   float floor_ = p.y + 70.;
   return min(wall*.6, floor_);
 }
-vec3 nrm(vec3 p){ vec2 e = vec2(.03,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .03;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 float shadow(vec3 ro, vec3 rd){
   float r = 1., t = .3;
-  for(int i=0;i<20;i++){ float h = map(ro+rd*t); r = min(r, 6.*h/t); t += clamp(h, .4, 4.); if(r < .02 || t > 50.) break; }
+  for(int i=0;i<14;i++){ float h = map(ro+rd*t); r = min(r, 6.*h/t); t += clamp(h, .5, 5.); if(r < .02 || t > 50.) break; }
   return sat(r);
 }
 

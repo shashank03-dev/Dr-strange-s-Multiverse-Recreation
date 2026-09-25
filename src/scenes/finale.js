@@ -22,6 +22,8 @@ float tower(vec3 p, float h, float w, float style){
   return d;
 }
 float skyline(vec3 p, out float id){
+  id = 0.;
+  if(p.z < 100.) return 110. - p.z;          // the skyline only exists beyond the parapet
   vec2 c = floor(p.xz/30.);
   vec2 q = mod(p.xz, 30.) - 15.;
   vec2 h = hash22(c);
@@ -54,7 +56,7 @@ float map(vec3 p, out float m, out float id){
   if(par < d){ d = par; m = 1.; }
   float hedge = sdRBox(p - vec3(0., .7, 15.), vec3(12., .7, .6), .4);
   hedge = min(hedge, sdRBox(vec3(abs(p.x) - 13., p.y - .7, p.z - 5.), vec3(.6, .7, 10.), .4));
-  hedge += .18*(fbm3(p*2.2) - .5);
+  hedge += .18*(noise(p*2.2) - .5) + .06*(noise(p*6.) - .5);
   if(hedge < d){ d = hedge; m = 2.; }
   vec3 cq = vec3(abs(p.x) - 5., p.y, p.z - 11.);
   float chair = min(sdBox(cq - vec3(0,.45,0), vec3(.35,.04,.35)), sdBox(cq - vec3(0,.75,.33), vec3(.35,.3,.03)));
@@ -70,10 +72,11 @@ float map(vec3 p, out float m, out float id){
   return d;
 }
 float map(vec3 p){ float m, id; return map(p, m, id); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.004,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .004;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 float shadow(vec3 ro, vec3 rd){
   float r = 1., t = .05;
-  for(int i=0;i<28;i++){ float h = map(ro+rd*t); r = min(r, 8.*h/t); t += clamp(h, .05, 2.5); if(r < .01 || t > 40.) break; }
+  for(int i=0;i<18;i++){ float h = map(ro+rd*t); r = min(r, 8.*h/t); t += clamp(h, .08, 3.); if(r < .01 || t > 40.) break; }
   return sat(r);
 }
 
@@ -103,9 +106,9 @@ vec3 render(vec2 uv, vec2 fc){
   vec3 rd = camRay(uv, ro, ta, roll, 1.25);
 
   float d = 0., m = 0., id = 0.;
-  for(int i=0;i<150;i++){
+  for(int i=0;i<120;i++){
     float h = map(ro + rd*d, m, id);
-    if(abs(h) < .0006*d || d > 420.) break;
+    if(abs(h) < .0008*d || d > 420.) break;
     d += h*(d > 40. ? .9 : .8);
   }
   vec3 col = sky(rd, SUN);
@@ -215,7 +218,8 @@ float relic(vec3 p, float t, out float m){
 }
 float map(vec3 p, out float m){ return relic(p, uT, m); }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.002,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .002;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 ${GOLD}
 

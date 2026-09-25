@@ -29,7 +29,8 @@ float map(vec3 p, out float m){
   return d;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .01;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
@@ -114,7 +115,8 @@ float map(vec3 p, out float m){
   return d;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .01;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
@@ -248,10 +250,11 @@ vec2 path(float z, float i){
 
 float map(vec3 p, out vec3 col){
   float d = 1e9; col = vec3(0); float wsum = 0.;
+  float nz = noise(p*2.5);
   for(int i=0;i<6;i++){
     float fi = float(i);
     vec2 c = path(p.z, fi);
-    float r = .35 + .15*sin(p.z*.6 + fi*3.) + .12*noise(p*2.5 + fi);
+    float r = .35 + .15*sin(p.z*.6 + fi*3.) + .12*(sin(nz*6.283 + fi*2.1)*.5 + .5);
     float di = length(p.xy - c) - r;
     float w = exp(-max(di,0.)*6.);
     col += PCOL[i]*w; wsum += w;
@@ -266,7 +269,8 @@ float map(vec3 p, out vec3 col){
   return d;
 }
 float map(vec3 p){ vec3 c; return map(p, c); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.004,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .004;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 env(vec3 rd){
   float s = fbm3(rd.xy*3. + rd.z);
@@ -338,7 +342,8 @@ float map(vec3 p, out float m){
   return d;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.005,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .005;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
@@ -400,7 +405,8 @@ float map(vec3 p, out float m){
   return d;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .01;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 sky(vec3 rd){ return envSky(rd)*vec3(.8,1.,1.05); }
 

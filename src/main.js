@@ -78,7 +78,7 @@ function resize() {
   let fw = W, fh = Math.round(W / aspect);
   if (fh > Hh) { fh = Hh; fw = Math.round(Hh * aspect); }
   film = { x: Math.floor((W - fw) / 2), y: Math.floor((Hh - fh) / 2), w: fw, h: fh };
-  const cw = Math.min(fw, 2560), ch = Math.max(2, Math.round(cw / aspect));
+  const cw = Math.min(fw, 1920), ch = Math.max(2, Math.round(cw / aspect));
   if (targets) {
     for (const k of ['A', 'B', 'comp0', 'comp1', 'streak0', 'streak1']) deleteTarget(gl, targets[k]);
     targets.bloom.forEach((t) => deleteTarget(gl, t));
@@ -187,13 +187,20 @@ function target(t, w, h) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, t ? t.fb : null);
   gl.viewport(0, 0, w ?? t.w, h ?? t.h);
 }
+// Relative cost of each universe's shader (1 = a typical shot), measured offline
+// with window.__profileScene.
+const COST = {
+  eye: 0.25, sanctum: 1.38, firehall: 1.73, cosmos: 0.43, silk: 0.73, crystal: 0.52, canyon: 1.45, ocean: 3.63, city: 2.65, machine: 0.63, boneyard: 1.68, jungle: 1.97, toon: 0.28, ruins: 1.75, voxel: 0.32, paint: 1.02, sepia: 0.78, neon: 0.33, rooftop: 2.65, title: 0.67, menu: 0.57,
+};
+let lastEffScale = 1;
 const smoothNoise = (t, s) => Math.sin(t + s) * 0.5 + Math.sin(t * 2.31 + s * 1.7) * 0.3 + Math.sin(t * 5.17 + s * 3.1) * 0.2;
 
-function renderScene(shot, t, tgt, shake, extra = {}) {
+function renderScene(shot, t, tgt, shake, extra = {}, sc = scale) {
   const p = progs[shot.id];
   const def = defs[shot.id];
-  const vw = Math.max(8, Math.floor(targets.sw / maxScale * scale));
-  const vh = Math.max(4, Math.floor(targets.sh / maxScale * scale));
+  sc = Math.min(maxScale, sc);
+  const vw = Math.max(8, Math.floor(targets.sw / maxScale * sc));
+  const vh = Math.max(4, Math.floor(targets.sh / maxScale * sc));
   target(tgt, vw, vh);
   gl.useProgram(p.prog);
   setU(p, 'uRes', vw, vh);
@@ -311,8 +318,13 @@ function renderFilm(t) {
   const imp = impulse(t);
   const amp = post.shake + imp * 0.02, hz = post.shakeHz;
   const shake = [smoothNoise(t * hz * 3, 1.3) * amp, smoothNoise(t * hz * 3, 7.1) * amp, smoothNoise(t * hz * 2, 4.2) * amp * 1.5];
-  const scaleA = renderScene(shotA, t, targets.A, shake);
-  const scaleB = st.b >= 0 ? renderScene(SHOTS[st.b], t, targets.B, shake) : scaleA;
+  // Predictive resolution: heavy universes (and transitions, which draw two)
+  // drop pixels the moment they start instead of stuttering while we react.
+  const load = (COST[shotA.id] ?? 1) + (st.b >= 0 ? (COST[SHOTS[st.b].id] ?? 1) : 0);
+  const sc = fixedScale ? scale : scale / Math.sqrt(load);
+  lastEffScale = sc;
+  const scaleA = renderScene(shotA, t, targets.A, shake, {}, sc);
+  const scaleB = st.b >= 0 ? renderScene(SHOTS[st.b], t, targets.B, shake, {}, sc) : scaleA;
   const fade = Math.min(1, t / 0.6) * Math.min(1, Math.max(0, (DURATION - t) / 1.5));
   postChain(t, post, scaleA, scaleB, st.cut, st.p, imp, fade);
   return st;
@@ -603,14 +615,14 @@ function frame() {
     if (st.a !== lastShot) { lastShot = st.a; ui.shot.textContent = SHOTS[st.a].name; }
     ui.time.textContent = `${fmt(t)}`;
     ui.fill.style.width = `${(t / DURATION) * 100}%`;
-    ui.res.textContent = `${Math.round(scale * 100)}% · ${Math.round(1000 / ema)} fps`;
+    ui.res.textContent = `${Math.round(Math.min(maxScale, lastEffScale) * 100)}% · ${Math.round(1000 / ema)} fps`;
     if (playing && nowMs - hudTimer > 2500) ui.hud.classList.add('hidden');
   }
   if (!fixedScale && (playing || mode === 'menu')) {
     ema = ema * 0.9 + dt * 0.1;
     if (++settle > 20) {
-      if (ema > 19.5) { scale = Math.max(0.35, scale * 0.9); settle = 0; }
-      else if (ema < 17.2 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.03); settle = 10; }
+      if (ema > 19.) { scale = Math.max(0.3, scale * 0.9); settle = 0; }
+      else if (ema < 16.9 && scale < maxScale * 1.6) { scale = Math.min(maxScale * 1.6, scale * 1.03); settle = 10; }
     }
   }
 }
@@ -742,3 +754,14 @@ window.__menuAt = (t, form, warp, hover, titleIn = 1, awakeV = 1, noT = 99) => {
 };
 window.__ready = () => ready;
 window.__ui = { wake, showTitle, showOptions, openPanel, closePanel };
+// Profiling hook: time one universe's shader alone (used to balance frame cost).
+window.__profileScene = (id, t, n = 3) => {
+  window.__hold = true;
+  const shot = id === 'menu' ? MENU_SHOT : SHOTS.find((s) => s.id === id);
+  const px = new Uint8Array(4);
+  const sync = () => { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); };
+  renderScene(shot, t, targets.A, [0, 0, 0]); sync();
+  const t0 = performance.now();
+  for (let i = 0; i < n; i++) { renderScene(shot, t + i * 0.1, targets.A, [0, 0, 0]); sync(); }
+  return (performance.now() - t0) / n;
+};

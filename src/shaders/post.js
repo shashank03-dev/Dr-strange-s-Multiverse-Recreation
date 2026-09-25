@@ -222,9 +222,11 @@ vec3 sampleComp(vec2 uv){
   // radial speed blur + lateral chromatic aberration in one gather
   vec2 d = uv-.5;
   vec3 acc = vec3(0); float wsum = 0.;
-  const int N = 12;
-  for(int i=0;i<N;i++){
-    float f = float(i)/float(N-1);
+  // only as many taps as the blur needs: 2 when still, up to 12 at full speed
+  int n = int(clamp(2. + uZoomBlur*120., 2., 12.));
+  for(int i=0;i<12;i++){
+    if(i >= n) break;
+    float f = float(i)/float(n-1);
     float s = 1. - uZoomBlur*f;
     float w = 1.-f*.6;
     float ca = uCA*(1.+f);

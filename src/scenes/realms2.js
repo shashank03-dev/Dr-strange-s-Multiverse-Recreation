@@ -57,7 +57,7 @@ float caustic(vec2 uv, float time){
 }
 
 float ground(vec2 xz){
-  return -9. + xz.x*.55 + 1.2*fbm3(xz*.15) + .25*noise(xz*1.3) + .08*sin(xz.x*3.+xz.y*1.5);
+  return -9. + xz.x*.55 + 1.2*noise(xz*.15) + .3*noise(xz*.45) + .25*noise(xz*1.3) + .08*sin(xz.x*3.+xz.y*1.5);
 }
 
 // coral: bumpy blobs and stubby branches in a sparse grid on the slope
@@ -75,7 +75,7 @@ float coral(vec3 p, out float cid){
     d += .04*sin(q.x*25.+sin(q.z*20.)*2.);
   } else {      // branching coral
     d = 1e9;
-    for(int i=0;i<5;i++){
+    for(int i=0;i<3;i++){
       vec3 k = hash31(cid*31.+float(i));
       vec3 tip = vec3((k.x-.5)*1.2, .6 + k.y*1.2, (k.z-.5)*1.2);
       d = smin(d, sdCapsule(q, vec3(0), tip, .09 + .05*k.x), .15);
@@ -121,7 +121,8 @@ float map(vec3 p, out float m, out float id){
   return d;
 }
 float map(vec3 p){ float m, id; return map(p, m, id); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.005,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .005;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 water(vec3 rd, float depth){
   float up = rd.y*.5+.5;
@@ -137,11 +138,11 @@ vec3 render(vec2 uv, vec2 fc){
   vec3 rd = camRay(uv, ro, ta, -.55 + t*.12, 1.15);
 
   float d = 0., m = 0., id = 0.;
-  for(int i=0;i<110;i++){
+  for(int i=0;i<90;i++){
     vec3 p = ro + rd*d;
     float h = map(p, m, id);
-    if(abs(h) < .001*d || d > 45.) break;
-    d += h*.8;
+    if(abs(h) < .0015*d || d > 45.) break;
+    d += h*.85;
   }
   vec3 bg = water(rd, ro.y);
   vec3 col = bg;
@@ -185,14 +186,14 @@ vec3 render(vec2 uv, vec2 fc){
   float tm = min(d, 40.);
   vec3 sh = vec3(0);
   float j = hash12(fc + fract(t)*31.);
-  for(int i=0;i<14;i++){
-    float s = (float(i)+j)/14.*min(tm, 25.);
+  for(int i=0;i<10;i++){
+    float s = (float(i)+j)/10.*min(tm, 25.);
     vec3 q = ro + rd*s;
     vec2 pr = q.xz - SUN.xz/SUN.y*q.y;
-    float ray = pow(fbm3(pr*.35 + t*.05), 3.)*2.;
+    float ray = pow(noise(pr*.35 + t*.05)*.7 + noise(pr*.9 - t*.04)*.3, 3.)*2.;
     sh += ray*exp(-s*.08);
   }
-  col += vec3(.35,.7,.8)*sh/14.*min(tm,25.)*.09*(1.+pow(sat(dot(rd,SUN)),2.)*2.);
+  col += vec3(.35,.7,.8)*sh/10.*min(tm,25.)*.09*(1.+pow(sat(dot(rd,SUN)),2.)*2.);
   // Snell's window glitter when looking up
   col += vec3(.7,.95,1.)*caustic(rd.xz/max(rd.y,.1)*.3, t)*smoothstep(.3,.9,rd.y)*1.5;
   // rising bubbles + marine snow
@@ -285,24 +286,27 @@ float map(vec3 p, out float m, out float id){
   if(sw < d){ d = sw; m = 1.; }
   float b = building(p, lot, side);
   if(b < d){ d = b; m = 2.; id = lot + side*.5; }
-  float k; float c = car(p, k);
-  if(c < d){ d = c; m = 3.; id = k; }
+  if(abs(p.x) < 8. && p.y < 3.){ float k; float c = car(p, k);
+    if(c < d){ d = c; m = 3.; id = k; } }
   vec3 q = vec3(abs(p.x) - 10.3, p.y, mod(p.z, 27.) - 13.5);
   float pole = sdCylY(q - vec3(0,3.,0), .09, 3.);
   pole = min(pole, sdBox(q - vec3(-2.,5.9,0), vec3(2., .06, .06)));
   pole = min(pole, sdBox(q - vec3(-3.4,5.3,0), vec3(.22, .55, .22)));
   if(pole < d){ d = pole; m = 4.; }
-  float hy = sdVol(uHydrantS, uHydrantR, uHydrantE, hydrantLocal(p))*.55;
-  if(hy < d){ d = hy; m = 5.; }
-  float lp = sdVol(uLampS, uLampR, uLampE, lampLocal(p))*3.2;
-  if(lp < d){ d = lp; m = 6.; }
+  if(abs(abs(p.x) - 11.4) < 2.){
+    float hy = sdVol(uHydrantS, uHydrantR, uHydrantE, hydrantLocal(p))*.55;
+    if(hy < d){ d = hy; m = 5.; }
+    float lp = sdVol(uLampS, uLampR, uLampE, lampLocal(p))*3.2;
+    if(lp < d){ d = lp; m = 6.; }
+  }
   return d;
 }
 float map(vec3 p){ float m, id; return map(p, m, id); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.004,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .004;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 float shadow(vec3 ro, vec3 rd){
   float r = 1., t = .05;
-  for(int i=0;i<30;i++){ float h = map(ro+rd*t); r = min(r, 10.*h/t); t += clamp(h, .1, 3.); if(r < .01 || t > 60.) break; }
+  for(int i=0;i<20;i++){ float h = map(ro+rd*t); r = min(r, 10.*h/t); t += clamp(h, .15, 4.); if(r < .01 || t > 60.) break; }
   return sat(r);
 }
 
@@ -334,8 +338,8 @@ vec3 render(vec2 uv, vec2 fc){
       float lane = smoothstep(.08,.05,abs(abs(p.x)-.15))*step(.5,fract(p.z*.1));
       float cw = step(abs(mod(p.z,27.)-13.5-4.), 1.6)*step(.5, fract(p.x*.55))*step(abs(p.x),9.8);
       float paintWear = smoothstep(.3, .7, mt.h);
-      mt.alb = mix(mt.alb, vec3(.8,.62,.15), lane*.9*paintWear);
-      mt.alb = mix(mt.alb, vec3(.78), cw*.85*paintWear);
+      mt.alb = mix(mt.alb, vec3(.55,.42,.1), lane*.9*paintWear);
+      mt.alb = mix(mt.alb, vec3(.55), cw*.85*paintWear);
       mt.rough = mix(mt.rough, .45, lane + cw);
     } else if(m == 1.){
       mt = planarMat(uPaveC, uPaveN, p.xz*.35, n, 1.);
@@ -356,7 +360,7 @@ vec3 render(vec2 uv, vec2 fc){
       if(abs(q.y - 3.3) < .07 && face < -.02) { mt.alb = hb < .5 ? vec3(.35,.05,.04) : vec3(.05,.2,.12); mt.rough = .7; metal = 0.; }
     } else if(m == 3.){
       bool taxi = id < 2.;
-      mt.alb = taxi ? vec3(.75,.46,.02) : vec3(.015); mt.rough = .35; clear = .5;
+      mt.alb = taxi ? vec3(.5,.3,.012) : vec3(.015); mt.rough = .35; clear = .4;
       if(fract(id) >= .5){ mt.alb = vec3(.01); mt.rough = .05; }
       if(fract(id) == .25 || fract(id) == .75){ mt.alb = vec3(.02); mt.rough = .9; clear = 0.; }
     } else if(m == 4.){
@@ -427,7 +431,8 @@ float map(vec3 p, out float m){
   return d;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.004,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .004;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 float ao(vec3 p, vec3 n){ float s=0., w=1.; for(int i=1;i<=4;i++){ float h=.15*float(i); s+=w*(h-map(p+n*h)); w*=.6; } return sat(1.-s*1.5); }
 
 vec3 render(vec2 uv, vec2 fc){
@@ -529,7 +534,8 @@ float map(vec3 p, out float m){
   return g;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .01;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 firePos(int i){
   vec3 h = hash31(float(i)*7.7);
@@ -596,7 +602,7 @@ uniform sampler2D uBarkC, uBarkN, uMossC, uMossN, uLeafC, uLeafN;
 const vec3 SUN = normalize(vec3(-.5, .9, .4));
 
 float cliff(vec3 p){
-  return (p.x + 3.5 + 2.5*fbm3(p*.12) + .9*fbm3(p*.5) + .25*noise(p*2.))*.7;
+  return (p.x + 3.5 + 2.5*noise(p*.12) + .9*noise(p*.5) + .25*noise(p*2.))*.7;
 }
 float trunks(vec3 p){
   vec2 c = floor(p.xz/10.);
@@ -613,8 +619,8 @@ float clumps(vec3 p){
   vec3 h = hash33(c);
   q -= (h-.5)*1.5;
   float d = length(q*vec3(1.,1.4,1.)) - (.8 + h.x*.9);
-  d += .6*(fbm3(p*1.8) - .5);
-  return (h.y < .4) ? 2. : d;
+  if(h.y < .4) return 2.;
+  return d + .6*(noise(p*1.8) - .5);
 }
 float map(vec3 p, out float m){
   float c = cliff(p);
@@ -630,7 +636,8 @@ float map(vec3 p, out float m){
   return d;
 }
 float map(vec3 p){ float m; return map(p, m); }
-vec3 nrm(vec3 p){ vec2 e = vec2(.01,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ const vec2 k = vec2(1., -1.); const float h = .01;   // tetrahedral: 4 taps
+  return normalize(k.xyy*map(p + k.xyy*h) + k.yyx*map(p + k.yyx*h) + k.yxy*map(p + k.yxy*h) + k.xxx*map(p + k.xxx*h)); }
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
