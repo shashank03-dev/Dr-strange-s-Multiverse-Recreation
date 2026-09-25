@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/screen_sdf.bin", "col": "assets/vol/screen_col.bin", "n": 112, "nc": 64, "range": 0.17857142857142855, "extent": [0.7761, 0.9615, 0.2261], "size": 0.8336, "credit": {"id": "chinese_screen_panels", "name": "Chinese Screen Panels", "authors": ["Kirill Sannikov"]}}
+{"sdf": "assets/vol/screen_sdf.png", "col": "assets/vol/screen_col.png", "n": 112, "nc": 64, "range": 0.17857142857142855, "extent": [0.7761, 0.9615, 0.2261], "size": 0.8336, "credit": {"id": "chinese_screen_panels", "name": "Chinese Screen Panels", "authors": ["Kirill Sannikov"]}}

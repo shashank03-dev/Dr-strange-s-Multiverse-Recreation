@@ -423,8 +423,8 @@
  },
  "vol": {
   "bust": {
-   "sdf": "assets/vol/bust_sdf.bin",
-   "col": "assets/vol/bust_col.bin",
+   "sdf": "assets/vol/bust_sdf.png",
+   "col": "assets/vol/bust_col.png",
    "n": 128,
    "nc": 64,
    "range": 0.15625,
@@ -443,8 +443,8 @@
    }
   },
   "lion": {
-   "sdf": "assets/vol/lion_sdf.bin",
-   "col": "assets/vol/lion_col.bin",
+   "sdf": "assets/vol/lion_sdf.png",
+   "col": "assets/vol/lion_col.png",
    "n": 96,
    "nc": 48,
    "range": 0.20833333333333331,
@@ -463,8 +463,8 @@
    }
   },
   "whale": {
-   "sdf": "assets/vol/whale_sdf.bin",
-   "col": "assets/vol/whale_col.bin",
+   "sdf": "assets/vol/whale_sdf.png",
+   "col": "assets/vol/whale_col.png",
    "n": 112,
    "nc": 48,
    "range": 0.17857142857142855,
@@ -483,8 +483,8 @@
    }
   },
   "shark": {
-   "sdf": "assets/vol/shark_sdf.bin",
-   "col": "assets/vol/shark_col.bin",
+   "sdf": "assets/vol/shark_sdf.png",
+   "col": "assets/vol/shark_col.png",
    "n": 96,
    "nc": 32,
    "range": 0.20833333333333331,
@@ -503,8 +503,8 @@
    }
   },
   "ship": {
-   "sdf": "assets/vol/ship_sdf.bin",
-   "col": "assets/vol/ship_col.bin",
+   "sdf": "assets/vol/ship_sdf.png",
+   "col": "assets/vol/ship_col.png",
    "n": 128,
    "nc": 64,
    "range": 0.15625,
@@ -525,8 +525,8 @@
    }
   },
   "moonrock": {
-   "sdf": "assets/vol/moonrock_sdf.bin",
-   "col": "assets/vol/moonrock_col.bin",
+   "sdf": "assets/vol/moonrock_sdf.png",
+   "col": "assets/vol/moonrock_col.png",
    "n": 64,
    "nc": 32,
    "range": 0.3125,
@@ -548,8 +548,8 @@
    }
   },
   "hydrant": {
-   "sdf": "assets/vol/hydrant_sdf.bin",
-   "col": "assets/vol/hydrant_col.bin",
+   "sdf": "assets/vol/hydrant_sdf.png",
+   "col": "assets/vol/hydrant_col.png",
    "n": 64,
    "nc": 32,
    "range": 0.3125,
@@ -568,8 +568,8 @@
    }
   },
   "streetlamp": {
-   "sdf": "assets/vol/streetlamp_sdf.bin",
-   "col": "assets/vol/streetlamp_col.bin",
+   "sdf": "assets/vol/streetlamp_sdf.png",
+   "col": "assets/vol/streetlamp_col.png",
    "n": 96,
    "nc": 32,
    "range": 0.20833333333333331,
@@ -588,8 +588,8 @@
    }
   },
   "lantern": {
-   "sdf": "assets/vol/lantern_sdf.bin",
-   "col": "assets/vol/lantern_col.bin",
+   "sdf": "assets/vol/lantern_sdf.png",
+   "col": "assets/vol/lantern_col.png",
    "n": 80,
    "nc": 48,
    "range": 0.25,
@@ -608,8 +608,8 @@
    }
   },
   "screen": {
-   "sdf": "assets/vol/screen_sdf.bin",
-   "col": "assets/vol/screen_col.bin",
+   "sdf": "assets/vol/screen_sdf.png",
+   "col": "assets/vol/screen_col.png",
    "n": 112,
    "nc": 64,
    "range": 0.17857142857142855,
@@ -628,8 +628,8 @@
    }
   },
   "deadtree": {
-   "sdf": "assets/vol/deadtree_sdf.bin",
-   "col": "assets/vol/deadtree_col.bin",
+   "sdf": "assets/vol/deadtree_sdf.png",
+   "col": "assets/vol/deadtree_col.png",
    "n": 96,
    "nc": 48,
    "range": 0.20833333333333331,
@@ -648,8 +648,8 @@
    }
   },
   "tree": {
-   "sdf": "assets/vol/tree_sdf.bin",
-   "col": "assets/vol/tree_col.bin",
+   "sdf": "assets/vol/tree_sdf.png",
+   "col": "assets/vol/tree_col.png",
    "n": 96,
    "nc": 48,
    "range": 0.20833333333333331,
@@ -669,8 +669,8 @@
    }
   },
   "boulder": {
-   "sdf": "assets/vol/boulder_sdf.bin",
-   "col": "assets/vol/boulder_col.bin",
+   "sdf": "assets/vol/boulder_sdf.png",
+   "col": "assets/vol/boulder_col.png",
    "n": 64,
    "nc": 32,
    "range": 0.3125,
@@ -689,8 +689,8 @@
    }
   },
   "gnome": {
-   "sdf": "assets/vol/gnome_sdf.bin",
-   "col": "assets/vol/gnome_col.bin",
+   "sdf": "assets/vol/gnome_sdf.png",
+   "col": "assets/vol/gnome_col.png",
    "n": 64,
    "nc": 32,
    "range": 0.3125,

@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/streetlamp_sdf.bin", "col": "assets/vol/streetlamp_col.bin", "n": 96, "nc": 32, "range": 0.20833333333333331, "extent": [0.175, 0.9615, 0.096], "size": 2.0127, "credit": {"id": "street_lamp_01", "name": "Street Lamp 01", "authors": ["Josh Dean"]}}
+{"sdf": "assets/vol/streetlamp_sdf.png", "col": "assets/vol/streetlamp_col.png", "n": 96, "nc": 32, "range": 0.20833333333333331, "extent": [0.175, 0.9615, 0.096], "size": 2.0127, "credit": {"id": "street_lamp_01", "name": "Street Lamp 01", "authors": ["Josh Dean"]}}

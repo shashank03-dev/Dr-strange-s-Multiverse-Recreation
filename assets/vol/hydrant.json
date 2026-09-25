@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/hydrant_sdf.bin", "col": "assets/vol/hydrant_col.bin", "n": 64, "nc": 32, "range": 0.3125, "extent": [0.9615, 0.8789, 0.3493], "size": 0.4548, "credit": {"id": "fire_hydrant", "name": "Fire Hydrant", "authors": ["Gon\u00e7alo Fel\u00edcio"]}}
+{"sdf": "assets/vol/hydrant_sdf.png", "col": "assets/vol/hydrant_col.png", "n": 64, "nc": 32, "range": 0.3125, "extent": [0.9615, 0.8789, 0.3493], "size": 0.4548, "credit": {"id": "fire_hydrant", "name": "Fire Hydrant", "authors": ["Gon\u00e7alo Fel\u00edcio"]}}

@@ -10,10 +10,17 @@ async function bitmap(url) {
   return createImageBitmap(blob, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
 }
 
-async function bytes(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Could not load ${url} (${res.status})`);
-  return new Uint8Array(await res.arrayBuffer());
+// Volumes ship as PNGs with their z-slices stacked vertically; unpack to raw bytes.
+async function volumeBytes(url, channels) {
+  const img = await bitmap(url);
+  const c = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(img.width, img.height) : Object.assign(document.createElement('canvas'), { width: img.width, height: img.height });
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0);
+  const rgba = g.getImageData(0, 0, img.width, img.height).data;
+  if (channels === 4) return new Uint8Array(rgba.buffer);
+  const out = new Uint8Array(rgba.length / 4);
+  for (let i = 0; i < out.length; i++) out[i] = rgba[i * 4];
+  return out;
 }
 
 function tex2D(gl, img, { srgb = false, repeat = true, mips = true } = {}) {
@@ -93,7 +100,7 @@ export class AssetLibrary {
           this.items.set(key, { c: tex2D(gl, c, { srgb: true }), n: tex2D(gl, n), meta: e });
         } else if (kind === 'vol') {
           const e = m.vol[name];
-          const [s, c] = await Promise.all([bytes(e.sdf), bytes(e.col)]);
+          const [s, c] = await Promise.all([volumeBytes(e.sdf, 1), volumeBytes(e.col, 4)]);
           this.items.set(key, { s: tex3D(gl, s, e.n, 'r8'), c: tex3D(gl, c, e.nc, 'rgba'), meta: e });
         } else if (kind === 'ui') {
           const e = m.ui[name];
