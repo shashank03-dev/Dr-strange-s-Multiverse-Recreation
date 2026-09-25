@@ -1,0 +1,441 @@
+{
+ "env": {
+  "studio": {
+   "file": "assets/env/studio.jpg",
+   "max": 512.0,
+   "k": 16.0,
+   "sun": [
+    0.8298,
+    0.0445,
+    -0.5563
+   ],
+   "credit": {
+    "id": "studio_small_04",
+    "name": "Studio Small 04",
+    "authors": [
+     "Greg Zaal"
+    ]
+   }
+  },
+  "sunset": {
+   "file": "assets/env/sunset.jpg",
+   "max": 35.25,
+   "k": 16.0,
+   "sun": [
+    0.7867,
+    0.0414,
+    0.6159
+   ],
+   "credit": {
+    "id": "belfast_sunset_puresky",
+    "name": "Belfast Sunset (Pure Sky)",
+    "authors": [
+     "Greg Zaal",
+     "Dimitrios Savva",
+     "Jarod Guest"
+    ]
+   }
+  },
+  "day": {
+   "file": "assets/env/day.jpg",
+   "max": 82.5,
+   "k": 16.0,
+   "sun": [
+    0.5546,
+    0.742,
+    0.3767
+   ],
+   "credit": {
+    "id": "kloofendal_48d_partly_cloudy_puresky",
+    "name": "Kloofendal 48d Partly Cloudy (Pure Sky)",
+    "authors": [
+     "Greg Zaal",
+     "Jarod Guest"
+    ]
+   }
+  },
+  "clear": {
+   "file": "assets/env/clear.jpg",
+   "max": 39.0,
+   "k": 16.0,
+   "sun": [
+    0.591,
+    0.6817,
+    0.4313
+   ],
+   "credit": {
+    "id": "kloofendal_43d_clear_puresky",
+    "name": "Kloofendal 43d Clear (Pure Sky)",
+    "authors": [
+     "Greg Zaal"
+    ]
+   }
+  },
+  "dawn": {
+   "file": "assets/env/dawn.jpg",
+   "max": 9.4375,
+   "k": 16.0,
+   "sun": [
+    0.81,
+    0.1573,
+    0.5649
+   ],
+   "credit": {
+    "id": "qwantani_dawn_puresky",
+    "name": "Qwantani Dawn (Pure Sky)",
+    "authors": [
+     "Greg Zaal",
+     "Jarod Guest"
+    ]
+   }
+  },
+  "overcast": {
+   "file": "assets/env/overcast.jpg",
+   "max": 6.1875,
+   "k": 16.0,
+   "sun": [
+    0.77,
+    0.3841,
+    0.5094
+   ],
+   "credit": {
+    "id": "kloofendal_overcast_puresky",
+    "name": "Kloofendal Overcast (Pure Sky)",
+    "authors": [
+     "Greg Zaal"
+    ]
+   }
+  },
+  "furnace": {
+   "file": "assets/env/furnace.jpg",
+   "max": 51.33921432495117,
+   "k": 16.0,
+   "sun": [
+    0.003,
+    1.0,
+    -0.0005
+   ],
+   "credit": {
+    "id": "smelting_tower_interior",
+    "name": "Smelting Tower Interior",
+    "authors": [
+     "Savva Zakharov"
+    ]
+   }
+  },
+  "haze": {
+   "file": "assets/env/haze.jpg",
+   "max": 173.42724609375,
+   "k": 16.0,
+   "sun": [
+    0.2171,
+    0.9634,
+    0.1574
+   ],
+   "credit": {
+    "id": "kloppenheim_05_puresky",
+    "name": "Kloppenheim 05 (Pure Sky)",
+    "authors": [
+     "Greg Zaal",
+     "Jarod Guest"
+    ]
+   }
+  },
+  "snow": {
+   "file": "assets/env/snow.jpg",
+   "max": 4.0,
+   "k": 16.0,
+   "sun": [
+    0.7617,
+    0.1194,
+    0.6369
+   ],
+   "credit": {
+    "id": "snow_field_2_puresky",
+    "name": "Snow Field 2 (Pure Sky)",
+    "authors": [
+     "Jarod Guest",
+     "Sergej Majboroda"
+    ]
+   }
+  }
+ },
+ "mat": {
+  "granite": {
+   "c": "assets/mat/granite_c.webp",
+   "n": "assets/mat/granite_n.webp",
+   "credit": {
+    "id": "granite_tile_02",
+    "name": "Granite Tile 02",
+    "authors": [
+     "Charlotte Baglioni"
+    ]
+   }
+  },
+  "darkwood": {
+   "c": "assets/mat/darkwood_c.webp",
+   "n": "assets/mat/darkwood_n.webp",
+   "credit": {
+    "id": "dark_wood",
+    "name": "Dark Wood",
+    "authors": [
+     "Dario Barresi",
+     "Dimitrios Savva",
+     "Rico Cilliers"
+    ]
+   }
+  },
+  "lacquer": {
+   "c": "assets/mat/lacquer_c.webp",
+   "n": "assets/mat/lacquer_n.webp",
+   "credit": {
+    "id": "lacquered_cherry_wood",
+    "name": "Lacquered Cherry Wood",
+    "authors": [
+     "Jenelle van Heerden",
+     "Rico Cilliers"
+    ]
+   }
+  },
+  "rock": {
+   "c": "assets/mat/rock_c.webp",
+   "n": "assets/mat/rock_n.webp",
+   "credit": {
+    "id": "rock_06",
+    "name": "Rock 06",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "cliff": {
+   "c": "assets/mat/cliff_c.webp",
+   "n": "assets/mat/cliff_n.webp",
+   "credit": {
+    "id": "cliff_side",
+    "name": "Cliff Side",
+    "authors": [
+     "James Ray Cock",
+     "Jenelle van Heerden",
+     "Dario Barresi"
+    ]
+   }
+  },
+  "sandstone": {
+   "c": "assets/mat/sandstone_c.webp",
+   "n": "assets/mat/sandstone_n.webp",
+   "credit": {
+    "id": "red_sandstone_wall",
+    "name": "Red Sandstone Wall",
+    "authors": [
+     "Amal Kumar"
+    ]
+   }
+  },
+  "mossrock": {
+   "c": "assets/mat/mossrock_c.webp",
+   "n": "assets/mat/mossrock_n.webp",
+   "credit": {
+    "id": "mossy_rock",
+    "name": "Mossy Rock",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "sand": {
+   "c": "assets/mat/sand_c.webp",
+   "n": "assets/mat/sand_n.webp",
+   "credit": {
+    "id": "coast_sand_01",
+    "name": "Coast Sand 01",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "coral": {
+   "c": "assets/mat/coral_c.webp",
+   "n": "assets/mat/coral_n.webp",
+   "credit": {
+    "id": "coral_ground_02",
+    "name": "Coral Ground 02",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "brick": {
+   "c": "assets/mat/brick_c.webp",
+   "n": "assets/mat/brick_n.webp",
+   "credit": {
+    "id": "brick_wall_09",
+    "name": "Brick Wall 09",
+    "authors": [
+     "Rob Tuytel",
+     "Matterfield"
+    ]
+   }
+  },
+  "asphalt": {
+   "c": "assets/mat/asphalt_c.webp",
+   "n": "assets/mat/asphalt_n.webp",
+   "credit": {
+    "id": "asphalt_02",
+    "name": "Asphalt 02",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "pavement": {
+   "c": "assets/mat/pavement_c.webp",
+   "n": "assets/mat/pavement_n.webp",
+   "credit": {
+    "id": "concrete_pavement",
+    "name": "Concrete Pavement",
+    "authors": [
+     "Charlotte Baglioni"
+    ]
+   }
+  },
+  "facade": {
+   "c": "assets/mat/facade_c.webp",
+   "n": "assets/mat/facade_n.webp",
+   "credit": {
+    "id": "concrete_tile_facade",
+    "name": "Concrete Tile Facade",
+    "authors": [
+     "Charlotte Baglioni"
+    ]
+   }
+  },
+  "metal": {
+   "c": "assets/mat/metal_c.webp",
+   "n": "assets/mat/metal_n.webp",
+   "credit": {
+    "id": "metal_plate",
+    "name": "Metal Plate",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "rust": {
+   "c": "assets/mat/rust_c.webp",
+   "n": "assets/mat/rust_n.webp",
+   "credit": {
+    "id": "rusty_metal_02",
+    "name": "Rusty Metal 02",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "dryground": {
+   "c": "assets/mat/dryground_c.webp",
+   "n": "assets/mat/dryground_n.webp",
+   "credit": {
+    "id": "dry_ground_rocks",
+    "name": "Dry Ground Rocks",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "bark": {
+   "c": "assets/mat/bark_c.webp",
+   "n": "assets/mat/bark_n.webp",
+   "credit": {
+    "id": "bark_brown_02",
+    "name": "Bark Brown 02",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "leaves": {
+   "c": "assets/mat/leaves_c.webp",
+   "n": "assets/mat/leaves_n.webp",
+   "credit": {
+    "id": "forest_leaves_02",
+    "name": "Forest Leaves 02",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "concrete": {
+   "c": "assets/mat/concrete_c.webp",
+   "n": "assets/mat/concrete_n.webp",
+   "credit": {
+    "id": "concrete_floor_damaged_01",
+    "name": "Concrete Floor Damaged 01",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "cobble": {
+   "c": "assets/mat/cobble_c.webp",
+   "n": "assets/mat/cobble_n.webp",
+   "credit": {
+    "id": "cobblestone_floor_08",
+    "name": "Cobblestone Floor 08",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "sandbrick": {
+   "c": "assets/mat/sandbrick_c.webp",
+   "n": "assets/mat/sandbrick_n.webp",
+   "credit": {
+    "id": "white_sandstone_bricks",
+    "name": "White Sandstone Bricks",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  },
+  "grass": {
+   "c": "assets/mat/grass_c.webp",
+   "n": "assets/mat/grass_n.webp",
+   "credit": {
+    "id": "leafy_grass",
+    "name": "Leafy Grass",
+    "authors": [
+     "Charlotte Baglioni"
+    ]
+   }
+  },
+  "plaster": {
+   "c": "assets/mat/plaster_c.webp",
+   "n": "assets/mat/plaster_n.webp",
+   "credit": {
+    "id": "rough_plaster_03",
+    "name": "Rough Plaster 03",
+    "authors": [
+     "Rob Tuytel"
+    ]
+   }
+  }
+ },
+ "vol": {},
+ "ui": {
+  "title": {
+   "file": "assets/ui/title_sdf.png",
+   "range": 24,
+   "w": 1024,
+   "h": 256,
+   "q": 1.0
+  },
+  "the": {
+   "file": "assets/ui/the_sdf.png",
+   "range": 24,
+   "w": 1024,
+   "h": 256,
+   "q": 0.9249
+  }
+ }
+}

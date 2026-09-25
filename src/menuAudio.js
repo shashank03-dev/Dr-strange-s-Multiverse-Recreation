@@ -2,11 +2,11 @@
 // choir, hover ticks, a refusal and the surge when you say yes.
 
 export class MenuAudio {
-  constructor(ctx) {
+  constructor(ctx, dest = ctx.destination) {
     this.ctx = ctx;
     this.out = ctx.createGain();
     this.out.gain.value = 0.9;
-    this.out.connect(ctx.destination);
+    this.out.connect(dest);
     const n = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const d = n.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -103,6 +103,23 @@ export class MenuAudio {
     this._tone('square', 116.5, t, 0.3, 0.05, 58);
     this._noise(t, 0.25, 0.15, 'lowpass', 1200, 200);
   }
+
+  // The screen comes alive: a sub drop, a struck chord and a rising shimmer.
+  ignite() {
+    const t = this.now();
+    this._tone('sine', 62, t, 2.6, 0.55, 30);
+    this._noise(t, 1.2, 0.18, 'lowpass', 2400, 180);
+    [50, 57, 62, 65, 69, 74].forEach((m, i) => {
+      const f = 440 * Math.pow(2, (m - 69) / 12);
+      this._tone('sawtooth', f, t + 0.02 * i, 3.2, 0.018);
+      this._tone('sine', f * 2, t + 0.02 * i, 2.4, 0.02);
+    });
+    [86, 93, 98].forEach((m, i) => this._tone('sine', 440 * Math.pow(2, (m - 69) / 12), t + 0.4 + i * 0.12, 2.2, 0.018));
+  }
+
+  open() { const t = this.now(); this._noise(t, 0.45, 0.12, 'bandpass', 400, 3200); this._tone('sine', 880, t + 0.05, 0.25, 0.03); }
+  close() { const t = this.now(); this._noise(t, 0.35, 0.1, 'bandpass', 2800, 300); }
+  select() { const t = this.now(); this._tone('triangle', 987.8, t, 0.12, 0.05); this._tone('sine', 1975.5, t + 0.03, 0.18, 0.03); }
 
   reveal() {
     const t = this.now();

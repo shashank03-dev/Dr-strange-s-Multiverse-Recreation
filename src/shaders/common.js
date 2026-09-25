@@ -4,6 +4,7 @@
 export const HEAD = /* glsl */ `#version 300 es
 precision highp float;
 precision highp int;
+precision highp sampler3D;
 
 uniform vec2  uRes;     // render target size (pixels)
 uniform float uT;       // shot-local time (seconds, may be <0 or >duration in transitions)
@@ -120,6 +121,95 @@ vec3 blackbody(float t){ // t in 0..1 -> ember .. white-hot
 }
 
 float fresnel(vec3 n, vec3 rd, float f0){ return f0 + (1.-f0)*pow(1.-sat(dot(n,-rd)),5.); }
+
+
+// ---------------------------------------------------------------- image-based lighting
+// HDRIs arrive log-encoded in 8 bits; decode back to linear radiance.
+uniform sampler2D uEnv;
+uniform float uEnvMax, uEnvK;
+uniform vec3  uEnvSun;
+uniform float uEnvRot;    // yaw applied to the environment (radians)
+uniform float uEnvGain;   // exposure of the environment for this shot
+vec3 envDecode(vec3 e){ float L = log2(1. + uEnvMax*uEnvK); return (exp2(e*L) - 1.)/uEnvK; }
+vec3 envDir(vec3 d){ d.xz = rot(-uEnvRot)*d.xz; return d; }
+vec2 envUV(vec3 d){ d = envDir(d); return vec2(atan(d.z, d.x)/TAU + .5, acos(clamp(d.y, -1., 1.))/PI); }
+vec3 envLod(vec3 d, float lod){ return envDecode(textureLod(uEnv, envUV(d), lod).rgb)*uEnvGain; }
+vec3 envSky(vec3 d){ return envLod(d, 0.); }
+vec3 envSunDir(){ vec3 s = uEnvSun; s.xz = rot(uEnvRot)*s.xz; return normalize(s); }
+
+// ---------------------------------------------------------------- PBR materials
+// Each material is two textures: C = albedo (sRGB) + roughness, N = normal.xy + AO + height.
+struct Mat { vec3 alb; float rough; vec3 n; float ao; float h; };
+
+vec3 triW(vec3 n, float k){ vec3 w = pow(abs(n), vec3(k)); return w/(w.x + w.y + w.z); }
+
+Mat triMat(sampler2D C, sampler2D N, vec3 p, vec3 n, float scale, float nstr){
+  vec3 w = triW(n, 6.);
+  vec2 ux = p.zy*scale, uy = p.xz*scale, uz = p.xy*scale;
+  vec4 cx = texture(C, ux), cy = texture(C, uy), cz = texture(C, uz);
+  vec4 nx = texture(N, ux), ny = texture(N, uy), nz = texture(N, uz);
+  vec4 c = cx*w.x + cy*w.y + cz*w.z;
+  vec4 m = nx*w.x + ny*w.y + nz*w.z;
+  // whiteout-blended triplanar normal mapping
+  vec2 tx = (nx.xy*2. - 1.)*nstr, ty = (ny.xy*2. - 1.)*nstr, tz = (nz.xy*2. - 1.)*nstr;
+  vec3 an = abs(n);
+  vec3 bx = vec3(tx + n.zy, an.x*sqrt(sat(1. - dot(tx,tx))));
+  vec3 by = vec3(ty + n.xz, an.y*sqrt(sat(1. - dot(ty,ty))));
+  vec3 bz = vec3(tz + n.xy, an.z*sqrt(sat(1. - dot(tz,tz))));
+  bx.z *= sign(n.x); by.z *= sign(n.y); bz.z *= sign(n.z);
+  vec3 nn = normalize(bx.zyx*w.x + by.xzy*w.y + bz.xyz*w.z);
+  Mat r; r.alb = c.rgb; r.rough = c.a; r.n = nn; r.ao = m.b; r.h = m.a;
+  return r;
+}
+// Planar variant for large flat surfaces (floors, roads): one fetch per map.
+Mat planarMat(sampler2D C, sampler2D N, vec2 uv, vec3 n, float nstr){
+  vec4 c = texture(C, uv), m = texture(N, uv);
+  vec2 t = (m.xy*2. - 1.)*nstr;
+  // tangent frame for a surface whose normal is roughly +y
+  vec3 T = normalize(cross(n, vec3(0,0,1))), B = cross(T, n);
+  Mat r; r.alb = c.rgb; r.rough = c.a; r.n = normalize(n + T*t.x - B*t.y); r.ao = m.b; r.h = m.a;
+  return r;
+}
+
+float D_GGX(float nh, float a){ float a2 = a*a; float d = nh*nh*(a2 - 1.) + 1.; return a2/(PI*d*d + 1e-6); }
+float V_SmithJ(float nl, float nv, float a){ float k = a*.5; return .25/((nl*(1. - k) + k)*(nv*(1. - k) + k) + 1e-5); }
+vec3 F_Schlick(float c, vec3 f0){ return f0 + (1. - f0)*pow(1. - c, 5.); }
+vec2 envBRDF(float nv, float r){
+  const vec4 c0 = vec4(-1., -.0275, -.572, .022), c1 = vec4(1., .0425, 1.04, -.04);
+  vec4 rr = r*c0 + c1; float a004 = min(rr.x*rr.x, exp2(-9.28*nv))*rr.x + rr.y;
+  return vec2(-1.04, 1.04)*a004 + rr.zw;
+}
+// Direct light (GGX specular + Lambert diffuse).
+vec3 litPBR(vec3 alb, float rough, float metal, vec3 n, vec3 v, vec3 l, vec3 lc){
+  vec3 h = normalize(v + l);
+  float nl = sat(dot(n, l)), nv = max(dot(n, v), 1e-3), nh = sat(dot(n, h)), vh = sat(dot(v, h));
+  float a = max(rough*rough, .002);
+  vec3 f0 = mix(vec3(.04), alb, metal);
+  vec3 F = F_Schlick(vh, f0);
+  vec3 spec = D_GGX(nh, a)*V_SmithJ(nl, nv, a)*F;
+  vec3 diff = (1. - F)*(1. - metal)*alb/PI;
+  return (diff + spec)*lc*nl*PI;
+}
+// Ambient from the HDRI: blurred irradiance + roughness-filtered reflection.
+vec3 ambPBR(vec3 alb, float rough, float metal, vec3 n, vec3 v, float ao){
+  float nv = max(dot(n, v), 1e-3);
+  vec3 f0 = mix(vec3(.04), alb, metal);
+  vec2 ab = envBRDF(nv, rough);
+  vec3 spec = envLod(reflect(-v, n), rough*7.5)*(f0*ab.x + ab.y);
+  vec3 diff = envLod(n, 8.5)*alb*(1. - metal);
+  return (diff + spec)*ao;
+}
+
+// ---------------------------------------------------------------- model volumes
+// Meshes baked to signed-distance volumes. p is in model space where the longest
+// half-extent is 1; e is the model's half-extents in that space.
+float sdVol(sampler3D S, float range, vec3 e, vec3 p){
+  float box = sdBox(p, e + .03);
+  if(box > .08) return box;
+  float d = (texture(S, p*.5 + .5).r*255. - 128.)/127.*range;
+  return max(d, box);
+}
+vec3 volAlbedo(sampler3D C, vec3 p){ vec3 c = texture(C, p*.5 + .5).rgb; return c*c; }
 
 // ---------------------------------------------------------------- lightning
 // Jagged, flickering bolt from a to b in 2D. Returns intensity (core + halo).
