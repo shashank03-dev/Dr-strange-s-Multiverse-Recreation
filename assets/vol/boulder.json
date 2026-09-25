@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/boulder.sdf", "col": "assets/vol/boulder.col", "n": 64, "nc": 32, "range": 0.3125, "extent": [0.6683, 0.5273, 0.9615], "size": 0.9518, "credit": {"id": "boulder_01", "name": "Boulder 01", "authors": ["Rico Cilliers"]}}
+{"sdf": "assets/vol/boulder_sdf.bin", "col": "assets/vol/boulder_col.bin", "n": 64, "nc": 32, "range": 0.3125, "extent": [0.6683, 0.5273, 0.9615], "size": 0.9518, "credit": {"id": "boulder_01", "name": "Boulder 01", "authors": ["Rico Cilliers"]}}

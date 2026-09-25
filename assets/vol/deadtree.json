@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/deadtree.sdf", "col": "assets/vol/deadtree.col", "n": 96, "nc": 48, "range": 0.20833333333333331, "extent": [0.9615, 0.0915, 0.0875], "size": 1.5865, "credit": {"id": "dead_tree_trunk", "name": "Dead Tree Trunk", "authors": ["Rob Tuytel"]}}
+{"sdf": "assets/vol/deadtree_sdf.bin", "col": "assets/vol/deadtree_col.bin", "n": 96, "nc": 48, "range": 0.20833333333333331, "extent": [0.9615, 0.0915, 0.0875], "size": 1.5865, "credit": {"id": "dead_tree_trunk", "name": "Dead Tree Trunk", "authors": ["Rob Tuytel"]}}

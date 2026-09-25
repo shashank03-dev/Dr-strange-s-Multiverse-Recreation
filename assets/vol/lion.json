@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/lion.sdf", "col": "assets/vol/lion.col", "n": 96, "nc": 48, "range": 0.20833333333333331, "extent": [0.7068, 0.9615, 0.4552], "size": 0.2269, "credit": {"id": "lion_head", "name": "Lion Head", "authors": ["Tina"]}}
+{"sdf": "assets/vol/lion_sdf.bin", "col": "assets/vol/lion_col.bin", "n": 96, "nc": 48, "range": 0.20833333333333331, "extent": [0.7068, 0.9615, 0.4552], "size": 0.2269, "credit": {"id": "lion_head", "name": "Lion Head", "authors": ["Tina"]}}

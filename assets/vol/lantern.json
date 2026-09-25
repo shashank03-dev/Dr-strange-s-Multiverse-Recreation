@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/lantern.sdf", "col": "assets/vol/lantern.col", "n": 80, "nc": 48, "range": 0.25, "extent": [0.9612, 0.8187, 0.9615], "size": 0.4569, "credit": {"id": "chinese_chandelier", "name": "Chinese Chandelier", "authors": ["Kirill Sannikov"]}}
+{"sdf": "assets/vol/lantern_sdf.bin", "col": "assets/vol/lantern_col.bin", "n": 80, "nc": 48, "range": 0.25, "extent": [0.9612, 0.8187, 0.9615], "size": 0.4569, "credit": {"id": "chinese_chandelier", "name": "Chinese Chandelier", "authors": ["Kirill Sannikov"]}}

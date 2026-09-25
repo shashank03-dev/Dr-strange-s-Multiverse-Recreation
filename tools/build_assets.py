@@ -250,15 +250,15 @@ def build_model(name, pid, N, NC):
     q = np.clip(np.round(d / rng * 127 + 128), 0, 255).astype(np.uint8)
     dd = os.path.join(OUT, 'vol')
     os.makedirs(dd, exist_ok=True)
-    q.tofile(os.path.join(dd, f'{name}.sdf'))
+    q.tofile(os.path.join(dd, f'{name}_sdf.bin'))
     # colour volume (nearest surface colour, averaged)
     GC = grid(NC)
     _, cidx = tree.query(GC, k=6, workers=-1)
     cvol = COL[cidx].mean(1).astype(np.uint8)
     rgba = np.concatenate([cvol, np.full((len(cvol), 1), 255, np.uint8)], 1)
-    rgba.tofile(os.path.join(dd, f'{name}.col'))
+    rgba.tofile(os.path.join(dd, f'{name}_col.bin'))
     ext = ((hi - lo) / 2 / half).tolist()
-    return {'sdf': f'assets/vol/{name}.sdf', 'col': f'assets/vol/{name}.col', 'n': N, 'nc': NC,
+    return {'sdf': f'assets/vol/{name}_sdf.bin', 'col': f'assets/vol/{name}_col.bin', 'n': N, 'nc': NC,
             'range': rng, 'extent': [round(v, 4) for v in ext], 'size': round(float(half), 4),
             'credit': credit(pid)}
 

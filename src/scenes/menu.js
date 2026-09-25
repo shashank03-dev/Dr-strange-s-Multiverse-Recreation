@@ -45,7 +45,7 @@ vec3 render(vec2 uv, vec2 fc){
   vec2 p = uv/(1. + dive*dive*7.);
   p *= rot(warp*warp*2.5);
   // a gentle breathing tilt of the mandala's plane
-  vec2 q = (p - vec2(0., -.13))/.7;
+  vec2 q = (p - vec2(0., -.07))/.56;
   q.y *= 1. + .06*sin(t*.31);
   q.x *= 1. + .04*sin(t*.23 + 1.);
 

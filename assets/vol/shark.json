@@ -1,1 +1,1 @@
-{"sdf": "assets/vol/shark.sdf", "col": "assets/vol/shark.col", "n": 96, "nc": 32, "range": 0.20833333333333331, "extent": [0.4454, 0.5462, 0.9615], "size": 0.3951, "credit": {"id": "bronze_shark_statue", "name": "Bronze Shark Statue", "authors": ["Tina"]}}
+{"sdf": "assets/vol/shark_sdf.bin", "col": "assets/vol/shark_col.bin", "n": 96, "nc": 32, "range": 0.20833333333333331, "extent": [0.4454, 0.5462, 0.9615], "size": 0.3951, "credit": {"id": "bronze_shark_statue", "name": "Bronze Shark Statue", "authors": ["Tina"]}}

@@ -85,7 +85,7 @@
   .opt {
     position: relative; display: inline-flex; align-items: center; gap: .6em; padding: .3em .7em;
     background: none; border: 0; cursor: pointer; font: 700 clamp(26px, 3.1vw, 46px) var(--serif);
-    letter-spacing: .34em; margin-right: -.34em; color: #d8c1a666; transition: color .35s, text-shadow .35s, transform .35s;
+    letter-spacing: .34em; margin-right: -.34em; text-transform: uppercase; color: #d8c1a666; transition: color .35s, text-shadow .35s, transform .35s;
   }
   .opt .glyph {
     width: .42em; height: .42em; opacity: 0; transform: scale(.3) rotate(-90deg);
@@ -114,7 +114,7 @@
   .sec::after { content: ""; position: absolute; left: 0; right: .42em; bottom: .2em; height: 1px; background: var(--gold); transform: scaleX(0); transition: transform .35s; }
   .sec.sel, .sec:hover { color: var(--gold-hi); }
   .sec.sel::after { transform: scaleX(1); }
-  .opt:focus-visible, .sec:focus-visible { outline: 1px dashed #ffffff55; outline-offset: 6px; }
+  .opt:focus, .sec:focus, .chap:focus { outline: none; }
 
   .hints {
     position: absolute; right: 24px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 18px; align-items: center;
@@ -126,7 +126,7 @@
     display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 .4em; margin-right: .5em; box-sizing: border-box;
     font: 600 10px var(--ui); letter-spacing: .05em; color: #f3dcc0; border: 1px solid #e9b36b66; border-radius: 3px; background: #0008;
   }
-  @media (max-width: 760px) { .hints { display: none; } }
+  @media (max-width: 760px), (max-height: 620px) { .hints { display: none; } }
 
   #menu.leaving .pre, #menu.leaving #quip, #menu.leaving .bottom, #menu.leaving .hints { transition: opacity .5s; opacity: 0 !important; }
 
