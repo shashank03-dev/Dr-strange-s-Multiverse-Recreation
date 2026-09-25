@@ -16,10 +16,18 @@ It's a static page, but ES modules need to be served over HTTP:
 npx http-server -c-1 .     # or: python3 -m http.server
 ```
 
-Open `http://localhost:8080`, put headphones on, and press **Enter**.
+Open `http://localhost:8080` and put headphones on.
+
+The film opens on a title screen that asks: *Do you want to enter the
+Multiverse?* A circle of sling-ring sparks draws itself while the universes
+compile and the score renders. Choose **Yes** and the star at its centre opens
+into a portal, you dive through a hyperspace tunnel, and everything collapses
+to the single point of light the film begins with. Choosing **No** doesn't work
+for long. When the film ends you're returned to the title screen.
 
 | Key | Action |
 | --- | --- |
+| `←` `→`, `Enter` | title screen: choose, confirm (or `Y` / `N`) |
 | `Space` | pause / play |
 | `←` `→` | seek 2 s |
 | `1`–`9`, `0` | jump to a chapter |
@@ -27,10 +35,11 @@ Open `http://localhost:8080`, put headphones on, and press **Enter**.
 | `Q` | cycle the resolution ceiling (50 / 75 / 100 %) |
 | `M` | mute |
 | `H` | show / hide the HUD |
+| `Esc` | back to the title screen |
 
 URL parameters: `?t=16` starts at a given second, `?q=0.6` fixes the render
 scale (by default it adapts to hold 60 fps), `?noaudio` skips the score, and
-`?autoplay` starts playing without the title card.
+`?autoplay` answers the title screen for you.
 
 ## The edit
 

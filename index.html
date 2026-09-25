@@ -2,69 +2,184 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Multiverse — a real-time procedural short</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Multiverse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; }
-  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-  body { font-family: Inter, system-ui, sans-serif; color: #e8e2d8; }
-  #film { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: none; }
-  #overlay {
-    position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
-    background: radial-gradient(ellipse at 50% 55%, #1a0610 0%, #050206 60%, #000 100%);
-    transition: opacity 1.2s ease; z-index: 2;
+  :root {
+    color-scheme: dark;
+    --gold-hi: #fff4dc;
+    --gold: #f2b563;
+    --ember: #ff8a2a;
+    --rust: #9c3f16;
+    --star: #ff7ad1;
+    --ink: #07030a;
+    --dim: #9d8674;
+    background: #000;
   }
-  #overlay.gone { opacity: 0; pointer-events: none; }
-  .card { width: min(560px, calc(100vw - 32px)); }
-  h1 {
-    font-family: Cinzel, Georgia, serif; font-weight: 900; letter-spacing: .18em;
-    font-size: clamp(34px, 8vw, 72px); margin: 0 0 6px;
-    background: linear-gradient(180deg, #fff3de 0%, #f0b565 55%, #a4471a 100%);
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--gold-hi); -webkit-font-smoothing: antialiased; }
+  #film { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  body.playing #film { cursor: none; }
+
+  /* ---------------------------------------------------------------- title screen */
+  #menu {
+    position: fixed; inset: 0; z-index: 2;
+    display: grid; grid-template-rows: auto 1fr auto;
+    padding: max(7vh, 40px) 16px max(3.5vh, 20px);
+    text-align: center; pointer-events: none;
+    transition: opacity .9s ease;
+  }
+  #menu.gone { opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility 0s .9s; }
+  #menu > * { pointer-events: auto; }
+  .question { display: grid; gap: .35em; justify-items: center; }
+  .pre {
+    font: 600 clamp(12px, 1.35vw, 19px) Cinzel, Georgia, serif;
+    letter-spacing: .62em; margin-right: -.62em; text-transform: uppercase;
+    color: #e9cfa8; text-shadow: 0 0 18px #ff8a2a66, 0 2px 8px #000;
+  }
+  .title {
+    margin: 0; font: 900 clamp(38px, 8.4vw, 136px)/.95 Cinzel, Georgia, serif;
+    letter-spacing: .06em; text-transform: uppercase; text-wrap: balance;
+    filter: drop-shadow(0 0 22px #ff7a2a55) drop-shadow(0 4px 18px #000c);
+  }
+  .title .ch, .pre .ch { display: inline-block; white-space: pre; }
+  .title .ch {
+    background: linear-gradient(180deg, var(--gold-hi) 0%, #ffd79a 38%, var(--gold) 58%, var(--rust) 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .sub { font-size: 13px; letter-spacing: .38em; text-transform: uppercase; color: #b99c86; margin-bottom: 40px; }
-  #start {
-    font: 600 14px Inter, sans-serif; letter-spacing: .3em; text-transform: uppercase;
-    color: #fff; background: transparent; border: 1px solid #f0a060; padding: 16px 36px; cursor: pointer;
-    box-shadow: 0 0 40px #ff6a2033, inset 0 0 20px #ff6a2022; transition: all .3s;
+  .title .qm {
+    background: none; color: var(--star);
+    text-shadow: 0 0 14px var(--star), 0 0 44px #ff2fa8aa;
+    animation: qpulse 2.6s ease-in-out infinite;
   }
-  #start:hover:not(:disabled) { background: #ff7a3022; box-shadow: 0 0 60px #ff6a2066, inset 0 0 30px #ff6a2044; }
-  #start:disabled { opacity: .3; cursor: progress; }
-  .progress { height: 1px; background: #ffffff18; margin: 28px auto 12px; width: 240px; }
-  #bar { height: 100%; width: 0; background: #f0a060; transition: width .2s; }
-  #status { font-size: 12px; color: #8f7f74; letter-spacing: .08em; min-height: 1.4em; }
-  #status.error { color: #ff7a7a; white-space: pre-wrap; }
-  .keys { margin-top: 36px; font-size: 11px; color: #6a5d55; letter-spacing: .06em; line-height: 1.9; }
-  kbd { font: inherit; border: 1px solid #ffffff22; padding: 1px 6px; border-radius: 3px; color: #a08e80; }
+  @keyframes qpulse { 50% { text-shadow: 0 0 22px var(--star), 0 0 70px #ff2fa8; } }
+  .ch { opacity: 0; }
+  .reveal .ch { animation: rise 1.1s cubic-bezier(.2,.7,.1,1) forwards; animation-delay: calc(var(--i) * 55ms + var(--d, 0ms)); }
+  @keyframes rise {
+    0% { opacity: 0; transform: translateY(.35em) scale(1.25); filter: blur(14px); }
+    60% { opacity: 1; filter: blur(0); }
+    100% { opacity: 1; transform: none; filter: blur(0); }
+  }
+  #quip {
+    margin: .9em auto 0; min-height: 1.4em; max-width: 48ch;
+    font: italic 500 clamp(16px, 1.6vw, 22px) "Cormorant Garamond", Georgia, serif;
+    color: #f6d9c4; letter-spacing: .02em; text-shadow: 0 2px 10px #000;
+    opacity: 0; transform: translateY(4px); transition: opacity .5s, transform .5s;
+  }
+  #quip.on { opacity: .92; transform: none; }
+
+  /* loader */
+  .stack { display: grid; }
+  .stack > * { grid-area: 1 / 1; align-self: end; }
+  #loader { align-self: end; display: grid; justify-items: center; gap: 10px; transition: opacity .6s; }
+  #loader.done { opacity: 0; pointer-events: none; }
+  #status {
+    font: 500 11px Inter, sans-serif; letter-spacing: .34em; text-transform: uppercase; color: var(--dim);
+  }
+  .progress { width: min(320px, 70vw); height: 1px; background: #ffffff1c; position: relative; }
+  #bar { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--rust), var(--ember), var(--gold-hi)); box-shadow: 0 0 10px var(--ember); transition: width .25s; }
+  #pct { font: 500 11px Inter, sans-serif; letter-spacing: .2em; color: #c9a888; font-variant-numeric: tabular-nums; }
+  #status.error { color: #ff8f8f; letter-spacing: .05em; text-transform: none; font-size: 13px; max-width: 60ch; white-space: pre-wrap; }
+
+  /* options */
+  #options {
+    display: flex; justify-content: center; gap: clamp(28px, 7vw, 120px);
+    opacity: 0; transform: translateY(10px); transition: opacity .8s, transform .8s; pointer-events: none;
+  }
+  #options.on { opacity: 1; transform: none; pointer-events: auto; }
+  .opt {
+    position: relative; display: inline-flex; align-items: center; gap: .7em;
+    padding: .55em .9em; background: none; border: 0; cursor: pointer;
+    font: 700 clamp(22px, 2.6vw, 38px) Cinzel, Georgia, serif; letter-spacing: .38em; margin-right: -.38em;
+    text-transform: uppercase; color: #cdb49c80; transition: color .35s, text-shadow .35s, transform .35s;
+  }
+  .opt .label { position: relative; }
+  .opt .label::after {
+    content: ""; position: absolute; left: 0; right: .38em; bottom: -.28em; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-hi), transparent);
+    transform: scaleX(0); transition: transform .45s cubic-bezier(.2,.7,.1,1);
+  }
+  .opt .glyph {
+    width: .5em; height: .5em; opacity: 0; transform: scale(.3) rotate(-90deg);
+    background: radial-gradient(circle, #fff 0 20%, var(--gold) 60%);
+    clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    transition: opacity .35s, transform .6s cubic-bezier(.2,.7,.1,1);
+    filter: drop-shadow(0 0 6px var(--ember));
+  }
+  .opt.sel { color: var(--gold-hi); text-shadow: 0 0 18px #ff9a3c, 0 0 46px #ff7a2a88; transform: scale(1.06); }
+  .opt.sel .label::after { transform: scaleX(1); }
+  .opt.sel .glyph { opacity: 1; transform: scale(1) rotate(0); animation: spin 5s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #opt-no.sel { color: #dfe8ff; text-shadow: 0 0 16px #6f8cff, 0 0 40px #3a4cff88; }
+  #opt-no.sel .glyph { background: radial-gradient(circle, #fff 0 20%, #8ea4ff 60%); filter: drop-shadow(0 0 6px #6f8cff); }
+  .opt:focus-visible { outline: 1px dashed #ffffff66; outline-offset: 6px; }
+  .opt.shake { animation: shake .45s; }
+  @keyframes shake { 20% { transform: translateX(-9px) } 40% { transform: translateX(8px) } 60% { transform: translateX(-5px) } 80% { transform: translateX(3px) } }
+
+  footer {
+    display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap;
+    margin-top: 2.2vh; font: 500 10.5px Inter, sans-serif; letter-spacing: .26em; text-transform: uppercase; color: #8d7869;
+  }
+  footer .mid { color: #b99b82; }
+  kbd { font: inherit; border: 1px solid #ffffff26; border-radius: 3px; padding: 1px 6px; color: #d8bda4; letter-spacing: .08em; }
+  @media (max-width: 640px) { footer .side { display: none; } footer { justify-content: center; } }
+
+  /* the dive: everything is pulled into the star */
+  #menu.leaving .question { transition: transform 1.6s cubic-bezier(.6,0,.9,.5), opacity 1.2s, filter 1.4s; transform: scale(1.8); opacity: 0; filter: blur(16px); }
+  #menu.leaving #options, #menu.leaving footer, #menu.leaving #quip { transition: opacity .5s; opacity: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal .ch { animation-duration: .01s; animation-delay: 0s; }
+    .opt.sel .glyph, .title .qm { animation: none; }
+  }
+
+  /* ---------------------------------------------------------------- playback HUD */
   #hud {
-    position: fixed; left: 16px; right: 16px; bottom: 14px; z-index: 1; display: flex; align-items: center; gap: 14px;
+    position: fixed; left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 1;
+    display: flex; align-items: center; gap: 14px;
     font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #ffffffa0; transition: opacity .6s;
   }
-  #hud.hidden { opacity: 0; }
+  #hud.hidden { opacity: 0; pointer-events: none; }
   #scrub { flex: 1; height: 14px; display: flex; align-items: center; cursor: pointer; }
   #track { height: 2px; width: 100%; background: #ffffff22; }
-  #fill { height: 100%; width: 0; background: #f0a060; }
+  #fill { height: 100%; width: 0; background: var(--gold); }
   #shot { min-width: 120px; }
   #time, #res { font-variant-numeric: tabular-nums; color: #ffffff66; }
 </style>
 </head>
 <body>
 <canvas id="film"></canvas>
-<div id="overlay">
-  <div class="card">
-    <h1>Multiverse</h1>
-    <div class="sub">a real-time procedural short</div>
-    <button id="start" disabled>Enter</button>
-    <div class="progress"><div id="bar"></div></div>
-    <div id="status">Opening the sanctum…</div>
-    <div class="keys">
-      <kbd>Space</kbd> pause &nbsp; <kbd>←</kbd><kbd>→</kbd> seek &nbsp; <kbd>F</kbd> fullscreen &nbsp; <kbd>Q</kbd> quality &nbsp; <kbd>M</kbd> mute &nbsp; <kbd>H</kbd> HUD
+
+<div id="menu">
+  <header class="question" id="question">
+    <div class="pre" id="pre" data-text="Do you want to enter"></div>
+    <h1 class="title" id="title" data-text="The Multiverse"></h1>
+    <p id="quip" aria-live="polite"></p>
+  </header>
+  <div></div>
+  <div class="bottom">
+    <div class="stack">
+      <div id="loader">
+        <span id="status">Drawing the circle</span>
+        <div class="progress"><div id="bar"></div></div>
+        <span id="pct">0%</span>
+      </div>
+      <nav id="options" aria-label="Enter the multiverse?">
+        <button class="opt sel" id="opt-yes" data-choice="yes"><span class="glyph"></span><span class="label">Yes</span><span class="glyph"></span></button>
+        <button class="opt" id="opt-no" data-choice="no"><span class="glyph"></span><span class="label">No</span><span class="glyph"></span></button>
+      </nav>
     </div>
+    <footer>
+      <span class="side">Headphones recommended</span>
+      <span class="mid"><kbd>←</kbd> <kbd>→</kbd> choose &nbsp; <kbd>Enter</kbd> confirm</span>
+      <span class="side">58 s · 20 universes · rendered live</span>
+    </footer>
   </div>
 </div>
+
 <div id="hud" class="hidden">
   <span id="shot"></span>
   <div id="scrub"><div id="track"><div id="fill"></div></div></div>

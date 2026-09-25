@@ -1,7 +1,7 @@
 // The edit. Shot order, lengths and transitions follow the reference
 // sequence beat for beat; the camera takes the place of the travellers.
 
-const P = (o) => ({
+export const P = (o) => ({
   exposure: 1, sat: 1, contrast: 1, tint: [1, 1, 1], lift: [0, 0, 0],
   ca: 0.0015, zoomBlur: 0, grain: 0.045, vignette: 0.35, flicker: 0, sepia: 0,
   bloom: 0.7, streak: 0.25, streakTint: [0.45, 0.65, 1.0],

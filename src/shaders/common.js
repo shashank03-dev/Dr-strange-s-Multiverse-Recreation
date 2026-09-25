@@ -11,6 +11,7 @@ uniform float uDur;     // shot duration
 uniform float uG;       // global film time
 uniform vec3  uShake;   // camera shake: yaw, pitch, roll (radians)
 uniform sampler2D uTex; // auxiliary texture (title card)
+uniform vec4  uMenu;    // title screen: x formation, y warp, z hover (-1 no .. 1 yes), w seconds since a "no"
 out vec4 fragColor;
 
 #define PI  3.14159265359
