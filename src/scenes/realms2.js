@@ -536,7 +536,7 @@ vec3 render(vec2 uv, vec2 fc){
     if(h < .002*d || d > 70.) break;
     d += h*.8;
   }
-  vec3 sky = mix(vec3(.7,.8,.6), vec3(1.,1.,.9), sat(rd.y));
+  vec3 sky = mix(vec3(.5,.65,.45), vec3(1.,1.,.9), sat(rd.y));
   vec3 col = sky;
   float tm = min(d, 70.);
   if(d < 70.){
@@ -560,7 +560,7 @@ vec3 render(vec2 uv, vec2 fc){
     float trans = m == 2. ? pow(sat(dot(rd, SUN)), 2.)*1.2 : 0.;
     col = alb*(dif*vec3(1.,.95,.75)*3.2 + vec3(.3,.45,.3)*(n.y*.3+.7)*1.) + alb*vec3(.9,1.,.3)*trans;
     if(m == 2.) col += vec3(.9,1.,.7)*pow(sat(dot(reflect(rd,n), SUN)), 16.)*.6*dapple;   // waxy leaf glint
-    col = mix(col, vec3(.55,.68,.45), 1.-exp(-d*.03));
+    col = mix(col, vec3(.35,.5,.3), 1.-exp(-d*.02));
   }
   // sunbeams
   float sh = 0.;
@@ -571,7 +571,7 @@ vec3 render(vec2 uv, vec2 fc){
     vec2 pr = q.xz - SUN.xz/SUN.y*q.y;
     sh += smoothstep(.6,.8,noise(pr*.2));
   }
-  col += vec3(1.,.95,.7)*sh/12.*min(tm,30.)*.04;
+  col += vec3(1.,.95,.7)*sh/12.*min(tm,30.)*.022;
   col += vec3(1.,.95,.8)*pow(sat(dot(rd, SUN)), 30.)*3.;
   for(int i=0;i<25;i++){
     vec3 h = hash31(float(i)*2.9);

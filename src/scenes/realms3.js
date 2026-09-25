@@ -229,7 +229,7 @@ vec3 render(vec2 uv, vec2 fc){
 
 // 15. Paint realm -- riding thick ribbons of wet paint.
 export const paint = /* glsl */ `
-vec3 PCOL[6] = vec3[6](vec3(1.,.12,.08), vec3(1.,.55,.02), vec3(1.,.85,.1), vec3(.05,.75,.9), vec3(.12,.3,1.), vec3(.6,.1,.9));
+const vec3 PCOL[6] = vec3[6](vec3(1.,.12,.08), vec3(1.,.55,.02), vec3(1.,.85,.1), vec3(.05,.75,.9), vec3(.12,.3,1.), vec3(.6,.1,.9));
 
 vec2 path(float z, float i){
   return vec2(sin(z*.21 + i*1.7)*2.2 + sin(z*.47 + i)*.6, cos(z*.17 + i*2.3)*1.6 + sin(z*.39 + i*.5)*.5) + vec2(i - 2.5, 0.)*.9;

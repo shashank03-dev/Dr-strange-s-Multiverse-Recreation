@@ -7,14 +7,14 @@ float statue(vec3 q){
   float body = sdRBox(q-vec3(0.,1.8,0.), vec3(1.1,2.2,1.2), .45);
   float sh = sdEllipsoid(q-vec3(0.,3.9,0.), vec3(1.2,.8,1.7));
   body = smin(body, sh, .5);
-  float head = sdRBox(q-vec3(-.25,5.2,0.), vec3(.75,.95,.72), .3);
+  float head = sdRBox(q-vec3(-.25,5.3,0.), vec3(.9,1.1,.85), .35);
   float brow = sdBox(q-vec3(-.8,5.45,0.), vec3(.25,.12,.7));
   head = smin(head, brow, .15);
   float crown = sdBox(q-vec3(-.1,6.4,0.), vec3(.8,.3,.85));
   crown = min(crown, sdBox(q-vec3(-.1,6.9,0.), vec3(.45,.35,.5)));
   head = min(head, crown);
   // eye sockets
-  vec3 e = q-vec3(-.95,5.15,0.); e.z = abs(e.z)-.32;
+  vec3 e = q-vec3(-1.12,5.25,0.); e.z = abs(e.z)-.36;
   head = smax(head, -(length(e)-.17), .05);
   float d = min(body, head);
   // folded arms / knees
@@ -47,11 +47,11 @@ vec3 eyeGlow(vec3 ro, vec3 rd, float tmax, float t){
     for(int s=0;s<2;s++){
       float side = s==0 ? -1. : 1.;
       for(int e=0;e<2;e++){
-        vec3 lp = vec3(side*(4.6-.9), 5.15 + .2*hash11(floor(z/6.)+side*7.), z + (float(e)-.5)*.64);
+        vec3 lp = vec3(side*(4.6-1.1), 5.25 + .2*hash11(floor(z/6.)+side*7.), z + (float(e)-.5)*.72);
         float g = fogLight(ro, rd, lp, tmax);
         vec3 q = ro + rd*clamp(dot(lp-ro,rd),0.,tmax) - lp;
-        float core = .004/(dot(q,q)+.0015);
-        c += vec3(.35,.9,1.)*(g*.012 + core*2.);
+        float core = .0015/(dot(q,q)+.0004);
+        c += vec3(.35,.9,1.)*(g*.01 + core*2.);
       }
     }
   }
@@ -337,49 +337,68 @@ vec3 render(vec2 uv, vec2 fc){
 }
 `;
 
-// 6. The fall -- down a moss-choked canyon towards a blinding light.
+// 6. The fall -- down a banded sandstone canyon towards a blinding light.
 export const canyon = /* glsl */ `
+const vec3 SUN = normalize(vec3(-.6, .75, .3));
+float strata(float y){ return y + .6*sin(y*.21) ; }
 float map(vec3 p){
-  float w = 4. + 1.2*sin(p.z*.13) + .8*sin(p.z*.31+1.);
-  float wall = w - abs(p.x + 1.5*sin(p.z*.09)) ;
-  wall += 1.2*fbm3(p*.35) + .35*noise(p*1.7);
-  // horizontal strata ledges
-  wall += .25*smoothstep(.3,.7,fract(p.y*.6 + noise(p.xz*.2)));
-  return wall*.6;
+  float cx = 3.*sin(p.z*.04) + 1.5*sin(p.z*.11);
+  float w = 8.5 + 3.*sin(p.z*.07 + 1.) - .05*min(p.y, 0.);
+  float x = abs(p.x - cx);
+  float wall = w - x;
+  wall += 2.2*fbm3(vec3(p.x*.1, p.y*.35, p.z*.08));
+  // ledges: layered sandstone shelves stepping out of the wall
+  float ly = strata(p.y)*.55;
+  wall += .9*smoothstep(.55,.85,fract(ly + .3*noise(p.xz*.15)));
+  wall += .25*noise(p*1.1);
+  float floor_ = p.y + 70.;
+  return min(wall*.6, floor_);
 }
-vec3 nrm(vec3 p){ vec2 e = vec2(.02,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+vec3 nrm(vec3 p){ vec2 e = vec2(.03,0); return normalize(vec3(map(p+e.xyy)-map(p-e.xyy), map(p+e.yxy)-map(p-e.yxy), map(p+e.yyx)-map(p-e.yyx))); }
+float shadow(vec3 ro, vec3 rd){
+  float r = 1., t = .3;
+  for(int i=0;i<20;i++){ float h = map(ro+rd*t); r = min(r, 6.*h/t); t += clamp(h, .4, 4.); if(r < .02 || t > 50.) break; }
+  return sat(r);
+}
 
 vec3 render(vec2 uv, vec2 fc){
   float t = uT;
-  float z = t*18.;
-  vec3 ro = vec3(-1.5*sin(z*.09), 6. - t*3., z);
-  vec3 ta = vec3(-1.5*sin((z+6.)*.09), 3. - t*3., z + 6.);
-  vec3 rd = camRay(uv, ro, ta, .5 + t*.5, .9);
+  float z = t*14.;
+  float cx = 3.*sin(z*.04) + 1.5*sin(z*.11);
+  vec3 ro = vec3(cx, 4. - t*12., z);
+  float cz = 3.*sin((z+10.)*.04) + 1.5*sin((z+10.)*.11);
+  vec3 ta = vec3(cz, -6. - t*12., z + 10.);
+  vec3 rd = camRay(uv, ro, ta, .35 + t*.35, .9);
   float d = 0.;
-  for(int i=0;i<80;i++){
+  for(int i=0;i<100;i++){
     float h = map(ro + rd*d);
-    if(h < .002*d || d > 60.) break;
+    if(h < .002*d || d > 120.) break;
     d += h;
   }
-  vec3 L = normalize(vec3(.2, 1., .4));
-  vec3 sky = mix(vec3(1.,.6,.3), vec3(.9,.9,.85), sat(rd.y));
-  vec3 col = sky*1.5;
-  if(d < 60.){
+  vec3 sky = mix(vec3(1.,.8,.55), vec3(.55,.75,1.), sat(rd.y));
+  vec3 col = sky*1.3;
+  if(d < 120.){
     vec3 p = ro + rd*d, n = nrm(p);
-    float strata = fbm3(vec2(p.y*2.5, p.z*.05));
-    vec3 rock = mix(vec3(.55,.22,.08), vec3(.85,.45,.2), strata);
-    rock = mix(rock, vec3(.35,.12,.06), smoothstep(.5,.8,fbm3(p*2.)));
-    float moss = smoothstep(.35,.8,n.y + .4*fbm3(p*3.));
-    vec3 alb = mix(rock, vec3(.12,.3,.06)*(.6+.8*fbm3(p*6.)), moss);
-    float dif = sat(dot(n, L));
-    col = alb*(dif*vec3(1.,.85,.65)*2.2 + vec3(.35,.3,.3)*(n.y*.3+.7));
-    col = mix(col, sky*1.1, 1.-exp(-d*.012));
+    // banded sandstone: cream, orange, rust, deep red
+    float b = fract(strata(p.y)*.18 + .15*fbm3(p.xz*.05));
+    vec3 rock = mix(vec3(.85,.62,.4), vec3(.8,.38,.14), smoothstep(.1,.35,b));
+    rock = mix(rock, vec3(.55,.2,.08), smoothstep(.45,.7,b));
+    rock = mix(rock, vec3(.9,.7,.5), smoothstep(.8,.95,b));
+    rock *= .75 + .4*fbm3(p*vec3(.8,2.,.8));
+    float moss = smoothstep(.55,.85,n.y + .3*fbm3(p*1.5))*step(-60., p.y);
+    vec3 alb = mix(rock, vec3(.18,.32,.08)*(.6+.6*fbm3(p*4.)), moss*.85);
+    if(p.y < -69.){ alb = vec3(.1,.25,.28); }                                   // river
+    float sh = shadow(p + n*.05, SUN);
+    float dif = sat(dot(n, SUN))*sh;
+    float bounce = sat(-n.y*.5+.5);
+    // slot-canyon glow: sunlight bouncing between the walls
+    col = alb*(dif*vec3(1.,.85,.6)*3.2 + vec3(1.,.55,.28)*(.55 + .35*bounce) + vec3(.3,.4,.55)*sat(n.y)*.4);
+    col = mix(col, vec3(1.,.75,.5), 1.-exp(-d*.01));
   }
-  // the light at the end of the canyon
-  float burst = smoothstep(.6, 1.2, t);
+  // light at the end of the canyon
+  float burst = smoothstep(.55, 1.2, t);
   vec3 bd = normalize(ta-ro);
-  float g = pow(sat(dot(rd, bd)), 20.);
-  col += vec3(.8,1.,.95)*(g*8. + pow(sat(dot(rd,bd)),4.)*2.)*burst;
+  col += vec3(.8,1.,.95)*(pow(sat(dot(rd, bd)), 30.)*8. + pow(sat(dot(rd,bd)),4.)*1.5)*burst;
   return col;
 }
 `;
