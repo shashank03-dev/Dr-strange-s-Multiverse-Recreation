@@ -46,14 +46,21 @@ vec3 render(vec2 uv, vec2 fc){
     prevH = h;
     d += h*.9;
   }
-  vec3 col = vec3(.85,.9,.97);
-  col = mix(col, vec3(.35,.6,.95), smoothstep(.0,.5,rd.y));
+  // pop-art sky: warm horizon into saturated comic blue
+  vec3 col = mix(vec3(1.,.86,.55), vec3(.12,.45,.95), smoothstep(-.05,.45,rd.y));
   // comic speed-lines in the sky
   col = mix(col, vec3(1.), .5*step(.93, fract(atan(uv.y,uv.x)*14.))*smoothstep(.2,.9,length(uv)));
   if(d < 120.){
     vec3 p = ro + rd*d, n = nrm(p);
-    vec3 alb = m == 0. ? vec3(.55,.56,.6) : m == 1. ? vec3(.86,.86,.9) : m == 2. ? vec3(.8,.45,.35) : m == 3. ? vec3(.1,.85,.2) : vec3(1.,.8,.1);
-    if(m == 0.){ alb = mix(alb, vec3(.95), step(abs(p.x), .2)*step(.5, fract(p.z*.1))); }
+    // a four-colour comic palette, one ink per building
+    vec3 q0 = p; q0.x = abs(q0.x);
+    float lotH = hash11(floor(q0.z/10.)*2.1 + sign(p.x)*5.);
+    vec3 pal = lotH < .25 ? vec3(.93,.3,.22) : lotH < .5 ? vec3(.15,.7,.72) : lotH < .75 ? vec3(.98,.86,.62) : vec3(.55,.35,.8);
+    vec3 alb = m == 0. ? vec3(.24,.26,.36) : (m == 1. || m == 2.) ? pal : m == 3. ? vec3(.1,.85,.2) : vec3(1.,.8,.1);
+    if(m == 0.){
+      alb = mix(alb, vec3(1.), step(abs(p.x), .2)*step(.5, fract(p.z*.1)));        // centre line
+      alb = mix(alb, vec3(.95,.95,.9), step(8.8, abs(p.x))*.6);                    // kerbs
+    }
     float dif = sat(dot(n, SUN));
     float band = dif > .6 ? 1. : dif > .2 ? .72 : .45;
     col = alb*band*vec3(1.,.98,.95) + vec3(.05,.08,.18)*(1.-band);
@@ -63,11 +70,11 @@ vec3 render(vec2 uv, vec2 fc){
     col = mix(col, col*vec3(.55,.65,1.), dots*(1.-band)*1.2);
     // windows are drawn as flat dark-blue panes
     vec3 q = p; q.x = abs(q.x);
-    if((m == 1. || m == 2.) && q.x > 10.25) col = vec3(.25,.4,.7)*(.7 + .3*step(.5, fract((q.y+q.z)*.5)));
+    if((m == 1. || m == 2.) && q.x > 10.25) col = mix(vec3(.08,.2,.45), vec3(.55,.8,1.), step(.72, fract((q.y+q.z)*.5)))*band*1.1;   // glass with a comic glint
     // crease ink from normal discontinuities
     float crease = length(fwidth(n))*1.2;
     edge = max(edge, smoothstep(.4, .9, crease));
-    col = mix(col, vec3(.85,.9,.97), 1.-exp(-d*.0025));
+    col = mix(col, vec3(.95,.85,.7), 1.-exp(-d*.003));
   }
   col = mix(col, vec3(.03,.03,.06), edge);
   // comic glass shards: flat triangles with black outlines, flying out
